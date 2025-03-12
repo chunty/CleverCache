@@ -1,10 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata;
 
-namespace SmartCache.Helpers
+namespace CleverCache.Helpers
 {
     internal static class NavigationScanningHelper
     {
-        public static void Scan(SmartCacheScanOptions scanOptions, IEntityType entityType, HashSet<DependentCache> dependentCaches)
+        public static void Scan(CleverCacheScanOptions scanOptions, IEntityType entityType, HashSet<DependentCache> dependentCaches)
         {
             foreach (var navigation in entityType.GetNavigations())
             {

@@ -1,4 +1,4 @@
-﻿namespace SmartCache.Attributes
+﻿namespace CleverCache.Attributes
 {
     [AttributeUsage(AttributeTargets.Class)]
     public class DependantCachesAttribute(

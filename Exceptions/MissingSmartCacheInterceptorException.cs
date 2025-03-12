@@ -1,5 +1,5 @@
-﻿namespace SmartCache.Exceptions
+﻿namespace CleverCache.Exceptions
 {
-    internal class MissingSmartCacheInterceptorException() :
-        ApplicationException("SmartCache requires the ClearSmartMemoryCacheInterceptor to be added to the database context.");
+    internal class MissingCleverCacheInterceptorException() :
+        ApplicationException("CleverCache requires the ClearSmartMemoryCacheInterceptor to be added to the database context.");
 }

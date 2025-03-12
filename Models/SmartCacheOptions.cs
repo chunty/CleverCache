@@ -1,11 +1,11 @@
-﻿namespace SmartCache.Models
+﻿namespace CleverCache.Models
 {
-    public class SmartCacheOptions(SmartCacheScanOptions? scanOptions = null,
+    public class CleverCacheOptions(CleverCacheScanOptions? scanOptions = null,
         HashSet<DependentCache>? dependentCaches = null,
         bool disableAllScanning = false)
     {
         // ReSharper disable once IdentifierTypo
-        public SmartCacheScanOptions Scanning { get; set; } = scanOptions ?? new SmartCacheScanOptions();
+        public CleverCacheScanOptions Scanning { get; set; } = scanOptions ?? new CleverCacheScanOptions();
         public HashSet<DependentCache> DependentCaches { get; set; } = dependentCaches ?? [];
         public bool DisableAllScanning { get; set; } = disableAllScanning; // Don't do any scanning to set up 
     }

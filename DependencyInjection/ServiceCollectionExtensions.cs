@@ -3,28 +3,28 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 // ReSharper disable IdentifierTypo
 
-namespace SmartCache.DependencyInjection
+namespace CleverCache.DependencyInjection
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddSmartCache(this IServiceCollection services,
-            Action<SmartCacheOptions>? options = null)
+        public static IServiceCollection AddCleverCache(this IServiceCollection services,
+            Action<CleverCacheOptions>? options = null)
         {
             // Register the Smart Cache Options
-            var localOptions = new SmartCacheOptions();
+            var localOptions = new CleverCacheOptions();
             options?.Invoke(localOptions);
             services.TryAddSingleton(localOptions);
 
             services.AddMemoryCache();
 
-            // Register ISmartCache
-            services.TryAddSingleton<ISmartCache, SmartMemoryCache>();
+            // Register ICleverCache
+            services.TryAddSingleton<ICleverCache, CleverMemoryCache>();
 
             // Register the Smart Cache Interceptor as Service
-            services.TryAddSingleton<ClearSmartMemoryCacheInterceptor>();
+            services.TryAddSingleton<CleverCacheInterceptor>();
 
             // Register the Smart Cache Interceptor as Interceptor
-            services.AddSingleton<IInterceptor, ClearSmartMemoryCacheInterceptor>();
+            services.AddSingleton<IInterceptor, CleverCacheInterceptor>();
 
             return services;
         }

@@ -1,11 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore.Diagnostics;
 
-namespace SmartCache.Interceptors
+namespace CleverCache.Interceptors
 {
     /// <summary>
     /// Interceptor to clear smart memory cache after changes are saved to the database.
     /// </summary>
-    public class ClearSmartMemoryCacheInterceptor(ISmartCache cache) : SaveChangesInterceptor
+    public class CleverCacheInterceptor(ICleverCache cache) : SaveChangesInterceptor
     {
         /// <summary>
         /// Synchronously handles the event after changes are saved to the database.

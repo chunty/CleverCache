@@ -1,4 +1,4 @@
-﻿namespace SmartCache.Models
+﻿namespace CleverCache.Models
 {
     public record DependentCache(Type Type, Type DependentType);
 }

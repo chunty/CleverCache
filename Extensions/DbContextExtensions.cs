@@ -2,25 +2,25 @@
 using System.Reflection;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using SmartCache.Attributes;
-using SmartCache.Exceptions;
-using SmartCache.Helpers;
+using CleverCache.Attributes;
+using CleverCache.Exceptions;
+using CleverCache.Helpers;
 
-namespace SmartCache.Extensions
+namespace CleverCache.Extensions
 {
     internal static class DbContextExtensions
     {
-        public static void EnsureSmartCacheInterceptor(this DbContext dbContext)
+        public static void EnsureCleverCacheInterceptor(this DbContext dbContext)
         {
             var isRegistered = dbContext.GetService<IDbContextOptions>().Extensions
                 .OfType<CoreOptionsExtension>()
                 .Any(e => e.Interceptors != null
-                          && e.Interceptors.Any(i => i.GetType() == typeof(ClearSmartMemoryCacheInterceptor)));
+                          && e.Interceptors.Any(i => i.GetType() == typeof(CleverCacheInterceptor)));
 
-            if (!isRegistered) throw new MissingSmartCacheInterceptorException();
+            if (!isRegistered) throw new MissingCleverCacheInterceptorException();
         }
 
-        public static List<DependentCache> DiscoverDependentCaches(this DbContext dbContext, SmartCacheOptions smartCacheOptions)
+        public static List<DependentCache> DiscoverDependentCaches(this DbContext dbContext, CleverCacheOptions smartCacheOptions)
         {
             HashSet<DependentCache> dependentCaches = [];
 
@@ -73,7 +73,7 @@ namespace SmartCache.Extensions
                 }
 
                 NavigationScanningHelper.Scan(
-                    new SmartCacheScanOptions(attribute.NavigationScanMode, attribute.Reverse),
+                    new CleverCacheScanOptions(attribute.NavigationScanMode, attribute.Reverse),
                     entityType,
                     dependentCaches);
             }

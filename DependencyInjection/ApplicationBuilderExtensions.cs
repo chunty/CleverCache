@@ -1,17 +1,17 @@
 ﻿using Microsoft.AspNetCore.Builder;
 
-namespace SmartCache.DependencyInjection
+namespace CleverCache.DependencyInjection
 {
     public static class ApplicationBuilderExtensions
     {
-        public static IApplicationBuilder UseSmartCache<TContext>(this IApplicationBuilder app) where TContext : DbContext
+        public static IApplicationBuilder UseCleverCache<TContext>(this IApplicationBuilder app) where TContext : DbContext
         {
-            var cache = app.ApplicationServices.GetRequiredService<ISmartCache>();
-            var smartCacheOptions = app.ApplicationServices.GetRequiredService<SmartCacheOptions>();
+            var cache = app.ApplicationServices.GetRequiredService<ICleverCache>();
+            var smartCacheOptions = app.ApplicationServices.GetRequiredService<CleverCacheOptions>();
             var dbContext = app.ApplicationServices.GetRequiredService<TContext>();
             var dependentCaches = smartCacheOptions.DependentCaches.ToList();
 
-            dbContext.EnsureSmartCacheInterceptor();
+            dbContext.EnsureCleverCacheInterceptor();
 
             if (!smartCacheOptions.DisableAllScanning)
             {

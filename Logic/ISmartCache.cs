@@ -1,6 +1,6 @@
-﻿namespace SmartCache.Logic
+﻿namespace CleverCache.Logic
 {
-    public interface ISmartCache : IMemoryCache
+    public interface ICleverCache : IMemoryCache
     {
         /// <summary>
         /// Adds a dependent cache type.
@@ -10,11 +10,11 @@
         void AddDependentCache(Type type, Type dependentType);
 
         /// <typeparam name="T">The type of the cache.</typeparam>
-        /// <see cref="SmartMemoryCache.AddDependentCache"/>
+        /// <see cref="CleverMemoryCache.AddDependentCache"/>
         void AddDependentCache<T>(Type dependentType);
 
         /// <typeparam name="T">The type of the object the cache key belongs to.</typeparam>
-        /// <see cref="SmartMemoryCache.AddKeyToEntryType"/>>
+        /// <see cref="CleverMemoryCache.AddKeyToEntryType"/>>
         void AddKeyToEntryType<T>(object key) where T : class;
 
         /// <summary>

@@ -1,6 +1,6 @@
-﻿namespace SmartCache.Models
+﻿namespace CleverCache.Models
 {
-    public class SmartCacheScanOptions(
+    public class CleverCacheScanOptions(
         DependentCacheNavigationScanMode navigationScanMode = DependentCacheNavigationScanMode.None,
         bool reverseNavigationDependencies = false
     )

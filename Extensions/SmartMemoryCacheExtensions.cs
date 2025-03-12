@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using Microsoft.Extensions.Primitives;
 
-namespace SmartCache.Extensions
+namespace CleverCache.Extensions
 {
     public static class SmartMemoryCacheExtensions
     {
@@ -14,7 +14,7 @@ namespace SmartCache.Extensions
         /// <param name="key">The key of the entry to set.</param>
         /// <param name="value">The value to associate with the key.</param>
         /// <returns>The value that was set.</returns>
-        public static TItem Set<T, TItem>(this ISmartCache cache, object key, TItem value) where T : class =>
+        public static TItem Set<T, TItem>(this ICleverCache cache, object key, TItem value) where T : class =>
             cache.Set(key, value, null as MemoryCacheEntryOptions);
 
         /// <summary>
@@ -27,7 +27,7 @@ namespace SmartCache.Extensions
         /// <param name="value">The value to associate with the key.</param>
         /// <param name="absoluteExpiration">The point in time at which the cache entry will expire.</param>
         /// <returns>The value that was set.</returns>
-        public static TItem Set<T, TItem>(this ISmartCache cache,
+        public static TItem Set<T, TItem>(this ICleverCache cache,
             object key,
             TItem value,
             DateTimeOffset absoluteExpiration)
@@ -44,7 +44,7 @@ namespace SmartCache.Extensions
         /// <param name="value">The value to associate with the key.</param>
         /// <param name="absoluteExpirationRelativeToNow">The duration from now after which the cache entry will expire.</param>
         /// <returns>The value that was set.</returns>
-        public static TItem Set<T, TItem>(this ISmartCache cache,
+        public static TItem Set<T, TItem>(this ICleverCache cache,
             object key,
             TItem value,
             TimeSpan absoluteExpirationRelativeToNow) where T : class =>
@@ -60,7 +60,7 @@ namespace SmartCache.Extensions
         /// <param name="value">The value to associate with the key.</param>
         /// <param name="expirationToken">The <see cref="IChangeToken"/> that causes the cache entry to expire.</param>
         /// <returns>The value that was set.</returns>
-        public static TItem Set<T, TItem>(this ISmartCache cache,
+        public static TItem Set<T, TItem>(this ICleverCache cache,
             object key,
             TItem value,
             IChangeToken expirationToken) where T : class =>
@@ -76,7 +76,7 @@ namespace SmartCache.Extensions
         /// <param name="value">The value to associate with the key.</param>
         /// <param name="options">The existing <see cref="MemoryCacheEntryOptions"/> instance to apply to the new entry.</param>
         /// <returns>The value that was set.</returns>
-        public static TItem Set<T, TItem>(this ISmartCache cache, object key, TItem value, MemoryCacheEntryOptions? options) where T : class
+        public static TItem Set<T, TItem>(this ICleverCache cache, object key, TItem value, MemoryCacheEntryOptions? options) where T : class
         {
             cache.AddKeyToEntryType<T>(key);
             return cache.Set(key, value, options);
@@ -91,7 +91,7 @@ namespace SmartCache.Extensions
         /// <param name="key">The key of the entry to look for or create.</param>
         /// <param name="factory">The factory that creates the value associated with this key if the key does not exist in the cache.</param>
         /// <returns>The value associated with this key.</returns>
-        public static TItem? GetOrCreate<T, TItem>(this ISmartCache cache, object key, Func<ICacheEntry, TItem> factory)
+        public static TItem? GetOrCreate<T, TItem>(this ICleverCache cache, object key, Func<ICacheEntry, TItem> factory)
             where T : class => cache.GetOrCreate<T, TItem>(key, factory, null as MemoryCacheEntryOptions);
 
 
@@ -104,7 +104,7 @@ namespace SmartCache.Extensions
         /// <param name="key">The key of the entry to look for or create.</param>
         /// <param name="factory">The factory task that creates the value associated with this key if the key does not exist in the cache.</param>
         /// <returns>The task object representing the asynchronous operation.</returns>
-        public static Task<TItem?> GetOrCreateAsync<T, TItem>(this ISmartCache cache,
+        public static Task<TItem?> GetOrCreateAsync<T, TItem>(this ICleverCache cache,
             object key,
             Func<ICacheEntry, Task<TItem>> factory) where T : class =>
             cache.GetOrCreateAsync<T, TItem>(key, factory, null as MemoryCacheEntryOptions);

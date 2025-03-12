@@ -1,29 +1,29 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace SmartCache.Logic
+namespace CleverCache.Logic
 {
     /// <summary>
-    /// A smart memory cache that extends the <see cref="MemoryCache"/> and implements <see cref="ISmartCache"/>.
+    /// A smart memory cache that extends the <see cref="MemoryCache"/> and implements <see cref="ICleverCache"/>.
     /// </summary>
-    public class SmartMemoryCache : MemoryCache, ISmartCache
+    public class CleverMemoryCache : MemoryCache, ICleverCache
     {
         private readonly HashSet<CacheEntry> _cacheEntries = [];
         private readonly SemaphoreSlim _semaphore = new(1, 1);
         private readonly HashSet<DependentCache> _dependentCaches = [];
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SmartMemoryCache"/> class with the specified options.
+        /// Initializes a new instance of the <see cref="CleverMemoryCache"/> class with the specified options.
         /// </summary>
         /// <param name="optionsAccessor">The options to configure the memory cache.</param>
-        public SmartMemoryCache(IOptions<MemoryCacheOptions> optionsAccessor) : base(optionsAccessor) { }
+        public CleverMemoryCache(IOptions<MemoryCacheOptions> optionsAccessor) : base(optionsAccessor) { }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="SmartMemoryCache"/> class with the specified options and logger factory.
+        /// Initializes a new instance of the <see cref="CleverMemoryCache"/> class with the specified options and logger factory.
         /// </summary>
         /// <param name="optionsAccessor">The options to configure the memory cache.</param>
         /// <param name="loggerFactory">The logger factory to create loggers.</param>
-        public SmartMemoryCache(IOptions<MemoryCacheOptions> optionsAccessor, ILoggerFactory loggerFactory) : base(optionsAccessor, loggerFactory) { }
+        public CleverMemoryCache(IOptions<MemoryCacheOptions> optionsAccessor, ILoggerFactory loggerFactory) : base(optionsAccessor, loggerFactory) { }
 
         /// <summary>
         /// Adds a dependent cache type.
