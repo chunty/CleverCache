@@ -3,7 +3,7 @@ using Microsoft.Extensions.Primitives;
 
 namespace CleverCache.Extensions
 {
-    public static class SmartMemoryCacheExtensions
+	public static class SmartMemoryCacheExtensions
     {
         /// <summary>
         /// Associate a value with a key in the <see cref="IMemoryCache"/>.

@@ -1,49 +1,49 @@
-﻿namespace CleverCache.Logic
+﻿namespace CleverCache
 {
-    public interface ICleverCache : IMemoryCache
-    {
-        /// <summary>
-        /// Adds a dependent cache type.
-        /// </summary>
-        /// <param name="type">The type of the cache.</param>
-        /// <param name="dependentType">The dependent type of the cache.</param>
-        void AddDependentCache(Type type, Type dependentType);
+	public interface ICleverCache : IMemoryCache
+	{
+		/// <summary>
+		/// Adds a dependent cache type.
+		/// </summary>
+		/// <param name="type">The type of the cache.</param>
+		/// <param name="dependentType">The dependent type of the cache.</param>
+		void AddDependentCache(Type type, Type dependentType);
 
-        /// <typeparam name="T">The type of the cache.</typeparam>
-        /// <see cref="CleverMemoryCache.AddDependentCache"/>
-        void AddDependentCache<T>(Type dependentType);
+		/// <typeparam name="T">The type of the cache.</typeparam>
+		/// <see cref="CleverMemoryCache.AddDependentCache"/>
+		void AddDependentCache<T>(Type dependentType);
 
-        /// <summary>
-        /// Adds the specified key to the cache entry type.
-        /// </summary>
-        /// <param name="type">The type of the object the cache key belongs to.</param>
-        /// <param name="key">The key of the cache entry to add.</param>
-        void AddKeyToEntryType(Type type, object key);
+		/// <summary>
+		/// Adds the specified key to the cache entry type.
+		/// </summary>
+		/// <param name="type">The type of the object the cache key belongs to.</param>
+		/// <param name="key">The key of the cache entry to add.</param>
+		void AddKeyToEntryType(Type type, object key);
 
-        /// <typeparam name="T">The type of the object the cache key belongs to.</typeparam>
-        /// <see cref="CleverMemoryCache.AddKeyToEntryType"/>>
-        void AddKeyToEntryType<T>(object key) where T : class;
-		
+		/// <typeparam name="T">The type of the object the cache key belongs to.</typeparam>
+		/// <see cref="CleverMemoryCache.AddKeyToEntryType"/>>
+		void AddKeyToEntryType<T>(object key) where T : class;
+
 		/// <summary>
 		/// Removes all cache entries of the specified type.
 		/// </summary>
 		/// <param name="type">The type of the objects to remove cache entries for.</param>
 		void RemoveTypeKeys(Type type);
 
-        /// <summary>
-        /// Creates a new cache entry with the specified key.
-        /// </summary>
-        /// <param name="type">The type of the object the cache key belongs to.</param>
-        /// <param name="key">The key of the cache entry to create.</param>
-        /// <returns>The created cache entry.</returns>
-        ICacheEntry CreateEntry<T>(Type type, object key);
+		/// <summary>
+		/// Creates a new cache entry with the specified key.
+		/// </summary>
+		/// <param name="type">The type of the object the cache key belongs to.</param>
+		/// <param name="key">The key of the cache entry to create.</param>
+		/// <returns>The created cache entry.</returns>
+		ICacheEntry CreateEntry(Type type, object key);
 
-        ///<see cref="ICleverCache.CreateEntry(object)"/>
-        /// <typeparam name="T">The type of the object the cache key belongs to.</typeparam>
-        /// <param name="key">The key of the cache entry to create.</param>
-        /// <returns>The created cache entry.</returns>
-        ICacheEntry CreateEntry<T>(object key) where T : class;
-		
+		///<see cref="ICleverCache.CreateEntry(object)"/>
+		/// <typeparam name="T">The type of the object the cache key belongs to.</typeparam>
+		/// <param name="key">The key of the cache entry to create.</param>
+		/// <returns>The created cache entry.</returns>
+		ICacheEntry CreateEntry<T>(object key) where T : class;
+
 		/// <summary>
 		/// Gets the value associated with this key if it exists, or generates a new entry using the provided key and a value from the given factory if the key is not found.
 		/// </summary>
@@ -55,8 +55,8 @@
 		TItem? GetOrCreate<TItem>(
 			Type type,
 			object key,
-            Func<ICacheEntry, TItem> factory,
-            MemoryCacheEntryOptions? createOptions = null);
+			Func<ICacheEntry, TItem> factory,
+			MemoryCacheEntryOptions? createOptions = null);
 
 		/// <see cref="GetOrCreate{TItem}"/>
 		/// <typeparam name="T">The type of the object the cache key belongs to.</typeparam>

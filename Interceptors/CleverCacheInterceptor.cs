@@ -2,10 +2,10 @@
 
 namespace CleverCache.Interceptors
 {
-    /// <summary>
-    /// Interceptor to clear smart memory cache after changes are saved to the database.
-    /// </summary>
-    public class CleverCacheInterceptor(ICleverCache cache) : SaveChangesInterceptor
+	/// <summary>
+	/// Interceptor to clear smart memory cache after changes are saved to the database.
+	/// </summary>
+	public class CleverCacheInterceptor(ICleverCache cache) : SaveChangesInterceptor
     {
         /// <summary>
         /// Synchronously handles the event after changes are saved to the database.

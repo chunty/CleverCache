@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace CleverCache.DependencyInjection
 {
-    public static class ServiceCollectionExtensions
+	public static class ServiceCollectionExtensions
     {
         public static IServiceCollection AddCleverCache(this IServiceCollection services,
             Action<CleverCacheOptions>? options = null)

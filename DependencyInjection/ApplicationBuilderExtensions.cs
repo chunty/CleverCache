@@ -2,7 +2,7 @@
 
 namespace CleverCache.DependencyInjection
 {
-    public static class ApplicationBuilderExtensions
+	public static class ApplicationBuilderExtensions
     {
         public static IApplicationBuilder UseCleverCache<TContext>(this IApplicationBuilder app) where TContext : DbContext
         {
