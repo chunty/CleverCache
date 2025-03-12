@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
 
 namespace CleverCache.Logic
 {
@@ -67,16 +68,20 @@ namespace CleverCache.Logic
             }
         }
 
-        /// <summary>
-        /// Creates a new cache entry with the specified key.
-        /// </summary>
-        /// <typeparam name="T">The type of the object the cache key belongs to.</typeparam>
-        /// <param name="key">The key of the cache entry to create.</param>
-        /// <returns>The created cache entry.</returns>
-        public ICacheEntry CreateEntry<T>(object key) where T : class
+		/// <see cref="CreateEntry{TItem}"/>
+		/// <typeparam name="T">The type of the object the cache key belongs to.</typeparam>
+		public ICacheEntry CreateEntry<T>(object key) where T : class => CreateEntry(typeof(T), key);
+
+		/// <summary>
+		/// Creates a new cache entry with the specified key.
+		/// </summary>
+		/// <param name="type">The type of the object the cache key belongs to.</param>
+		/// <param name="key">The key of the cache entry to create.</param>
+		/// <returns>The created cache entry.</returns>
+		public ICacheEntry CreateEntry(Type type, object key)
         {
             var result = base.CreateEntry(key);
-            AddKeyToEntryType<T>(key);
+            AddKeyToEntryType(type,key);
             return result;
         }
 
@@ -90,36 +95,39 @@ namespace CleverCache.Logic
         /// <param name="createOptions">The options to be applied to the <see cref="ICacheEntry"/> if the key does not exist in the cache.</param>
         /// <returns>The value associated with this key.</returns>
         public TItem? GetOrCreate<T, TItem>(object key,
-            Func<ICacheEntry, TItem> factory,
-            MemoryCacheEntryOptions? createOptions) where T : class
+	        Func<ICacheEntry, TItem> factory,
+	        MemoryCacheEntryOptions? createOptions = null) where T : class =>
+	        GetOrCreate<TItem>(typeof(T), key, factory, createOptions);
+
+        public TItem? GetOrCreate<TItem>(Type type, object key, Func<ICacheEntry, TItem> factory, MemoryCacheEntryOptions? createOptions = null)
         {
-            if (this.TryGetValue(key, out object? result))
-            {
-                return (TItem?)result;
-            }
+			if (this.TryGetValue(key, out object? result))
+			{
+				return (TItem?)result;
+			}
 
-            try
-            {
-                // Prevent race conditions
-                _semaphore.Wait();
+			try
+			{
+				// Prevent race conditions
+				_semaphore.Wait();
 
-                using ICacheEntry entry = this.CreateEntry<T>(key);
+				using ICacheEntry entry = this.CreateEntry(type, key);
 
-                if (createOptions != null)
-                {
-                    entry.SetOptions(createOptions);
-                }
+				if (createOptions != null)
+				{
+					entry.SetOptions(createOptions);
+				}
 
-                result = factory(entry);
-                entry.Value = result;
+				result = factory(entry);
+				entry.Value = result;
 
-                return (TItem?)result;
-            }
-            finally
-            {
-                _semaphore.Release();
-            }
-        }
+				return (TItem?)result;
+			}
+			finally
+			{
+				_semaphore.Release();
+			}
+		}
 
         /// <summary>
         /// Asynchronously gets the value associated with this key if it exists, or generates a new entry using the provided key and a value from the given factory if the key is not found.
@@ -131,35 +139,38 @@ namespace CleverCache.Logic
         /// <param name="createOptions">The options to be applied to the <see cref="ICacheEntry"/> if the key does not exist in the cache.</param>
         /// <returns>The task object representing the asynchronous operation.</returns>
         public async Task<TItem?> GetOrCreateAsync<T, TItem>(object key,
-            Func<ICacheEntry, Task<TItem>> factory,
-            MemoryCacheEntryOptions? createOptions) where T : class
+	        Func<ICacheEntry, Task<TItem>> factory,
+	        MemoryCacheEntryOptions? createOptions = null) where T : class =>
+	        await this.GetOrCreateAsync(typeof(T), key, factory, createOptions);
+
+        public async Task<TItem?> GetOrCreateAsync<TItem>(Type type, object key, Func<ICacheEntry, Task<TItem>> factory, MemoryCacheEntryOptions? createOptions = null)
         {
-            if (this.TryGetValue(key, out object? result))
-            {
-                return (TItem?)result;
-            }
+			if (this.TryGetValue(key, out object? result))
+			{
+				return (TItem?)result;
+			}
 
-            try
-            {
-                // Prevent race conditions
-                await _semaphore.WaitAsync();
+			try
+			{
+				// Prevent race conditions
+				await _semaphore.WaitAsync();
 
-                using ICacheEntry entry = this.CreateEntry<T>(key);
+				using ICacheEntry entry = this.CreateEntry(type,key);
 
-                if (createOptions != null)
-                {
-                    entry.SetOptions(createOptions);
-                }
+				if (createOptions != null)
+				{
+					entry.SetOptions(createOptions);
+				}
 
-                result = await factory(entry).ConfigureAwait(false);
-                entry.Value = result;
+				result = await factory(entry).ConfigureAwait(false);
+				entry.Value = result;
 
-                return (TItem?)result;
-            }
-            finally
-            {
-                _semaphore.Release();
-            }
-        }
+				return (TItem?)result;
+			}
+			finally
+			{
+				_semaphore.Release();
+			}
+		}
     }
 }

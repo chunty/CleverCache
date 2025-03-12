@@ -4,7 +4,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<PackageId>CleverCache</PackageId>
-		<Version>1.0.0</Version>
+		<Version>1.0.1</Version>
 		<Authors>Chris Hunt</Authors>
 		<Company>TappetyClick</Company>
 		<Description>A library built off the back of MemoryCache...but that automatically handles its own deletion and race conditions.</Description>
