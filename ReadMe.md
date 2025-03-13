@@ -77,10 +77,16 @@ You can create these association manually by calling:
 ```csharp
 cache.AddKeyToType(type, key);
 ```
+You can create these association manually by calling:
+```csharp
+cache.AddKeyToTypes(arrayOfTypes, key);
+```
 or more succinctly:
 ```csharp
 cache.AddKeyToType<OtherType>(key);
 ```
+
+You can also do it by specifying an array of types when calling any of the create methods.
 
 However this can be tiresome and result in repetitive code. If you know 
 you often need to do this for a given entity you configure it globally via
@@ -98,4 +104,4 @@ public class ThingTwo;
 public class ThingThree;
 ```
 This will automatically register any keys for `ThingOne` with `ThingTwo` and `ThingThree` 
-so they changes any of the types will clear the cache key. 
+so changes to any object of these types will clear the cache key. 
