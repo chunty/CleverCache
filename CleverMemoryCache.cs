@@ -39,20 +39,20 @@ namespace CleverCache
 		public void AddDependentCache<T>(Type dependentType) => AddDependentCache(typeof(T), dependentType);
 
 		/// <typeparam name="T">The type of the object the cache key belongs to.</typeparam>
-		/// <see cref="AddKeyToEntryType"/>>
-		public void AddKeyToEntryType<T>(object key) where T : class => AddKeyToEntryType(typeof(T), key);
+		/// <see cref="AddKeyToType"/>>
+		public void AddKeyToType<T>(object key) where T : class => AddKeyToType(typeof(T), key);
 
 		/// <summary>
 		/// Adds the specified key to the cache entry type.
 		/// </summary>
 		/// <param name="type">The type of the object the cache key belongs to.</param>
 		/// <param name="key">The key of the cache entry to add.</param>
-		public void AddKeyToEntryType(Type type, object key)
+		public void AddKeyToType(Type type, object key)
 		{
 			_cacheEntries.Add(new CacheEntry(type, key));
 			foreach (var dependentCache in _dependentCaches.Where(x => x.Type == type))
 			{
-				AddKeyToEntryType(dependentCache.DependentType, key);
+				AddKeyToType(dependentCache.DependentType, key);
 			}
 		}
 
@@ -81,7 +81,7 @@ namespace CleverCache
 		public ICacheEntry CreateEntry(Type type, object key)
 		{
 			var result = CreateEntry(key);
-			AddKeyToEntryType(type, key);
+			AddKeyToType(type, key);
 			return result;
 		}
 

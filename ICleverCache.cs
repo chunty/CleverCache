@@ -18,11 +18,11 @@
 		/// </summary>
 		/// <param name="type">The type of the object the cache key belongs to.</param>
 		/// <param name="key">The key of the cache entry to add.</param>
-		void AddKeyToEntryType(Type type, object key);
+		void AddKeyToType(Type type, object key);
 
 		/// <typeparam name="T">The type of the object the cache key belongs to.</typeparam>
-		/// <see cref="CleverMemoryCache.AddKeyToEntryType"/>>
-		void AddKeyToEntryType<T>(object key) where T : class;
+		/// <see cref="CleverMemoryCache.AddKeyToType"/>>
+		void AddKeyToType<T>(object key) where T : class;
 
 		/// <summary>
 		/// Removes all cache entries of the specified type.

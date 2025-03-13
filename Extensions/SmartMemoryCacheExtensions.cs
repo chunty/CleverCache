@@ -78,7 +78,7 @@ namespace CleverCache.Extensions
         /// <returns>The value that was set.</returns>
         public static TItem Set<T, TItem>(this ICleverCache cache, object key, TItem value, MemoryCacheEntryOptions? options) where T : class
         {
-            cache.AddKeyToEntryType<T>(key);
+            cache.AddKeyToType<T>(key);
             return cache.Set(key, value, options);
         }
 
