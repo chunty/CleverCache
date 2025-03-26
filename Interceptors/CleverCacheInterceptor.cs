@@ -44,7 +44,7 @@ namespace CleverCache.Interceptors
             // Remove cache entries for each type.
             foreach (var type in types)
             {
-                cache.RemoveTypeKeys(type);
+                cache.RemoveByType(type);
             }
 
             // Call the base method.

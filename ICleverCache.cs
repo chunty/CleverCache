@@ -1,6 +1,6 @@
 ﻿namespace CleverCache;
 
-public interface ICleverCache : ICleverCacheEntryManager
+public interface ICleverCache : ICacheEntryManager
 {
 	/// <summary>
 	/// Gets the value associated with this key if it exists, or generates a new entry using the provided key and a value from the given factory if the key is not found.
@@ -41,6 +41,6 @@ public interface ICleverCache : ICleverCacheEntryManager
 	/// Removes all cache entries of the specified type.
 	/// </summary>
 	/// <param name="type">The type of the objects to remove cache entries for.</param>
-	void RemoveTypeKeys(Type type);
+	void RemoveByType(Type type);
 
 }

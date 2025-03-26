@@ -73,7 +73,7 @@ public class CleverMemoryCache(IMemoryCache memoryCache) : CacheEntryManager, IC
 
 
 	/// <inheritdoc />
-	public void RemoveTypeKeys(Type type)
+	public void RemoveByType(Type type)
 	{
 		foreach (var entry in CacheEntries.Where(x => x.Type == type))
 		{

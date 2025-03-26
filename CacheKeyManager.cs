@@ -1,5 +1,5 @@
 ﻿namespace CleverCache;
-public abstract class CacheEntryManager : ICleverCacheEntryManager
+public abstract class CacheEntryManager : ICacheEntryManager
 {
 	protected readonly HashSet<CacheTypeMap> CacheEntries = [];
 	protected readonly HashSet<DependentCache> DependentCaches = [];

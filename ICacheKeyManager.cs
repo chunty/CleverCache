@@ -1,6 +1,6 @@
 ﻿namespace CleverCache;
 
-public interface ICleverCacheEntryManager
+public interface ICacheEntryManager
 {
 	/// <summary>
 	/// Adds a dependent cache type.
