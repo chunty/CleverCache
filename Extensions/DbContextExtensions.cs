@@ -17,7 +17,7 @@ namespace CleverCache.Extensions
                 .Any(e => e.Interceptors != null
                           && e.Interceptors.Any(i => i.GetType() == typeof(CleverCacheInterceptor)));
 
-            if (!isRegistered) throw new MissingCleverCacheInterceptorException();
+            if (!isRegistered) throw new MissingInterceptorException();
         }
 
         public static List<DependentCache> DiscoverDependentCaches(this DbContext dbContext, CleverCacheOptions smartCacheOptions)

@@ -73,17 +73,18 @@ Often you have information in a cache entry that contains data from multiple ent
 and the caches needs to be refreshed if ANY of the types changes not
 just the primary object.
 
-You can create these association manually by calling:
+You can create these association manually on a type by type basis by calling:
 ```csharp
 cache.AddKeyToType(type, key);
-```
-You can create these association manually by calling:
-```csharp
-cache.AddKeyToTypes(arrayOfTypes, key);
 ```
 or more succinctly:
 ```csharp
 cache.AddKeyToType<OtherType>(key);
+```
+
+You can also do multiple types in one call by calling:
+```csharp
+cache.AddKeyToTypes(arrayOfTypes, key);
 ```
 
 You can also do it by specifying an array of types when calling any of the create methods.
