@@ -14,7 +14,7 @@ public static class CleverCacheExtensions
 	/// <param name="factory">The factory that creates the value associated with this key if the key does not exist in the cache.</param>
 	/// <param name="createOptions">The options to be applied to the <see cref="ICacheEntry"/> if the key does not exist in the cache.</param>
 	/// <returns>The value associated with this key.</returns>
-	public static TItem? GetOrCreate<T, TItem>(this ICache cache, object key,
+	public static TItem? GetOrCreate<T, TItem>(this ICleverCache cache, object key,
 		Func<ICacheEntry, TItem> factory,
 		MemoryCacheEntryOptions? createOptions = null) where T : class =>
 		cache.GetOrCreate(typeof(T), key, factory, createOptions);
@@ -29,7 +29,7 @@ public static class CleverCacheExtensions
 	/// <param name="factory">The factory that creates the value associated with this key if the key does not exist in the cache.</param>
 	/// <param name="createOptions">The options to be applied to the <see cref="ICacheEntry"/> if the key does not exist in the cache.</param>
 	/// <returns>The value associated with this key.</returns>
-	public static TItem? GetOrCreate<TItem>(this ICache cache, Type type, object key, Func<ICacheEntry, TItem> factory,
+	public static TItem? GetOrCreate<TItem>(this ICleverCache cache, Type type, object key, Func<ICacheEntry, TItem> factory,
 		MemoryCacheEntryOptions? createOptions = null) =>
 		cache.GetOrCreate([type], key, factory, createOptions);
 
@@ -43,7 +43,7 @@ public static class CleverCacheExtensions
 	/// <param name="factory">The factory task that creates the value associated with this key if the key does not exist in the cache.</param>
 	/// <param name="createOptions">The options to be applied to the <see cref="ICacheEntry"/> if the key does not exist in the cache.</param>
 	/// <returns>The task object representing the asynchronous operation.</returns>
-	public static async Task<TItem?> GetOrCreateAsync<T, TItem>(this ICache cache, object key,
+	public static async Task<TItem?> GetOrCreateAsync<T, TItem>(this ICleverCache cache, object key,
 		Func<ICacheEntry, Task<TItem>> factory,
 		MemoryCacheEntryOptions? createOptions = null) where T : class =>
 		await cache.GetOrCreateAsync(typeof(T), key, factory, createOptions);
@@ -58,7 +58,7 @@ public static class CleverCacheExtensions
 	/// <param name="factory">The factory task that creates the value associated with this key if the key does not exist in the cache.</param>
 	/// <param name="createOptions">The options to be applied to the <see cref="ICacheEntry"/> if the key does not exist in the cache.</param>
 	/// <returns>The task object representing the asynchronous operation.</returns>
-	public static async Task<TItem?> GetOrCreateAsync<TItem>(this ICache cache, Type type,
+	public static async Task<TItem?> GetOrCreateAsync<TItem>(this ICleverCache cache, Type type,
 		object key,
 		Func<ICacheEntry, Task<TItem>> factory,
 		MemoryCacheEntryOptions? createOptions = null) =>
@@ -74,7 +74,7 @@ public static class CleverCacheExtensions
 	/// <param name="factory">The factory task that creates the value associated with this key if the key does not exist in the cache.</param>
 	/// <param name="createOptions">The options to be applied to the <see cref="ICacheEntry"/> if the key does not exist in the cache.</param>
 	/// <returns>The task object representing the asynchronous operation.</returns>
-	public static Task<TItem?> GetOrCreateAsync<TItem>(this ICache cache, Type[] types,
+	public static Task<TItem?> GetOrCreateAsync<TItem>(this ICleverCache cache, Type[] types,
 		object key,
 		Func<ICacheEntry, Task<TItem>> factory,
 		MemoryCacheEntryOptions? createOptions = null) => throw new NotImplementedException();

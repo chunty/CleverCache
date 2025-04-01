@@ -4,7 +4,6 @@
 public class CleverMemoryCache(IMemoryCache memoryCache) : CacheEntryManager, ICleverCache
 {
 	private readonly SemaphoreSlim _semaphore = new(1, 1);
-
 	
 	/// <inheritdoc />
 	public TItem? GetOrCreate<TItem>(Type[] types, object key, Func<ICacheEntry, TItem> factory, MemoryCacheEntryOptions? createOptions = null)

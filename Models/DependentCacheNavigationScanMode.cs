@@ -4,6 +4,7 @@
     {
         None,
         Direct,
-        Recursive
+        Recursive/*,
+        Attribute*/
     }
 }
