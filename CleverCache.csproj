@@ -9,6 +9,7 @@
 		<Company>TappetyClick</Company>
 		<Description>Like MemoryCache but better! You never need to worry about clearing cache or race conditions again.</Description>
 		<PackageTags>MemoryCache,Automatic Cache</PackageTags>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
 
 	<ItemGroup>
