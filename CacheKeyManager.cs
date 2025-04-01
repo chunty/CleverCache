@@ -18,7 +18,7 @@ public abstract class CacheEntryManager : ICacheEntryManager
 			CacheEntries.Add(new CacheTypeMap(type, key));
 			foreach (var dependentCache in DependentCaches.Where(x => x.Type == type))
 			{
-				this.AddKeyToType(dependentCache.DependentType, key);
+				CacheEntries.Add(new CacheTypeMap(dependentCache.DependentType, key));
 			}
 		}
 	}
