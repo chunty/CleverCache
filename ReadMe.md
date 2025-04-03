@@ -105,4 +105,27 @@ public class ThingTwo;
 public class ThingThree;
 ```
 This will automatically register any keys for `ThingOne` with `ThingTwo` and `ThingThree` 
-so changes to any object of these types will clear the cache key. 
+so changes to any object of these types will clear the cache key. You can also reverse these
+mapping by using `reverse: true` in the attribute. This will register `ThingTwo` and `ThingThree` with `ThingOne`
+
+# Auto caching mediatr queries
+This is really powerful tool that enables you to quickly add caching to your mediatr queries without any changes 
+to your handlers.
+
+Add the following to your mediatr setup:
+
+```csharp
+services.AddMediatR(cfg =>
+{
+	// Other config you may have
+	cfg.AddCleverCache(); // Registers the mediatr pipeline behaviour
+});
+```
+
+Then simply add the following attribute to any query you want to cache, specifing the type(s) 
+you want the cache for:
+```csharp
+[AutoCache([typeof(MyEntityType)])]
+```
+This uses the mediatr request as the cache key so you can use the same query with different parameters 
+and it will cache each one separately.
