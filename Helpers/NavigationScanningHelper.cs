@@ -1,11 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata;
 
-namespace CleverCache.Helpers
+namespace CleverCache.Helpers;
+
+internal static class NavigationScanningHelper
 {
-    internal static class NavigationScanningHelper
-    {
-        public static void Scan(CleverCacheScanOptions scanOptions, IEntityType entityType, HashSet<DependentCache> dependentCaches)
-        {
+	public static void Scan(CleverCacheScanOptions scanOptions, IEntityType entityType, HashSet<DependentCache> dependentCaches)
+	{
             foreach (var navigation in entityType.GetNavigations())
             {
                 var sourceType = entityType.ClrType;
@@ -32,5 +32,4 @@ namespace CleverCache.Helpers
                 Scan(scanOptions, dependentEntityType, dependentCaches);
             }
         }
-    }
 }
