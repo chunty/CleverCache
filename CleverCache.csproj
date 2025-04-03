@@ -4,7 +4,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<PackageId>CleverCache</PackageId>
-		<Version>1.0.5</Version>
+		<Version>1.0.6</Version>
 		<Authors>Chris Hunt</Authors>
 		<Company>TappetyClick</Company>
 		<Description>Like MemoryCache but better! You never need to worry about clearing cache or race conditions again.</Description>

@@ -42,6 +42,3 @@ internal class AutoCacheBehaviour<TRequest, TResponse>(ICleverCache cache)
 		return await next(cancellationToken); // Only call next here if cache miss
 	}
 }
-
-{
-}
