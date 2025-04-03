@@ -109,7 +109,7 @@ so changes to any object of these types will clear the cache key. You can also r
 mapping by using `reverse: true` in the attribute. This will register `ThingTwo` and `ThingThree` with `ThingOne`
 
 # Auto caching mediatr queries
-This is really powerful tool that enables you to quickly add caching to your mediatr queries without any changes 
+This is a really powerful tool that enables you to quickly add caching to your mediatr queries without any changes 
 to your handlers.
 
 Add the following to your mediatr setup:
@@ -126,6 +126,7 @@ Then simply add the following attribute to any query you want to cache, specifin
 you want the cache for:
 ```csharp
 [AutoCache([typeof(MyEntityType)])]
+public record MyQuery : IRequest;
 ```
 This uses the mediatr request as the cache key so you can use the same query with different parameters 
 and it will cache each one separately.
