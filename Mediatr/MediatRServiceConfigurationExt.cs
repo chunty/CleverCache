@@ -1,9 +1,7 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-
-namespace CleverCache.Mediatr;
-internal static class MediatRServiceConfigurationExt
+﻿namespace CleverCache.Mediatr;
+public static class MediatRServiceConfigurationExt
 {
-	private static void AddCleverCache(this MediatRServiceConfiguration cfg)
+	public static void AddCleverCache(this MediatRServiceConfiguration cfg)
 	{
 		cfg.AddOpenBehavior(typeof(AutoCacheBehaviour<,>));
 	}
