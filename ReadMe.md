@@ -16,7 +16,7 @@ Out the box CleverCache also handles problems with race conditions when using ca
 >_BONUS:_ If you're using Mediatr, CleverCache can automatically cache results but using a pipeline behaviour with minimal changes
 to your existing code.
 
-# Installing CleverCache
+## Installing CleverCache
 You should install CleverCache with NuGet:
 ```
 Install-Package CleverCache
@@ -28,7 +28,7 @@ dotnet add package CleverCache
 Either commands, from Package Manager Console or .NET Core CLI, will download and install 
 CleverCache and all required dependencies.
 
-# Get Started
+## Get Started
 
 1. Register the services:
     ```csharp
@@ -83,7 +83,7 @@ CleverCache and all required dependencies.
     app.UseCleverCache<AppDbContext>();
     ```
 
-# Usage
+## Usage
 You create cache in the same way you would when using MemoryCache, but specify an additional type parameter as shown below 
 to associate a given type with a cache key:
 ```csharp
@@ -100,7 +100,7 @@ to associate a given type with a cache key:
 The interceptor tracks when any instance of `MyEntityType` is added, changed or deleted and will clear all 
 cache keys associated with that type.
 
-# Dependent Caches
+## Dependent Caches
 Often you have information in a cache entry that contains data from multiple entity types 
 and the caches needs to be refreshed if ANY of the types changes not
 just the primary object.
@@ -142,7 +142,7 @@ This will automatically register any keys for `ThingOne` with `ThingTwo` and `Th
 so changes to any object of these types will clear the cache key. You can also reverse these
 mappings by using `reverse: true` in the attribute. This will register `ThingTwo` and `ThingThree` with `ThingOne`
 
-# Auto caching mediatr queries
+## Auto caching mediatr queries
 This is a really powerful tool that enables you to quickly add caching to your mediatr queries without any changes 
 to your handlers.
 
@@ -163,3 +163,19 @@ public record MyQuery : IRequest;
 ```
 This uses the mediatr request as the cache key so you can use the same query with different parameters 
 and it will cache each one separately.
+
+## Unit testing
+Unit testing methods that use cache is generally fiddly, to help with this **CleverCache** is shipped with a 
+`FakeCache` implementation which you can use in your test. The implementation never caches and always calls your 
+underlying method retrieve your data. For example when using `Moq.AutoMocker` you would do this:
+```csharp
+var mocker = new AutoMocker();
+mocker.Use<ICleverCache>(new FakeCache());
+var sut = mocker.CreateInstance<CarServiceWithCache>();
+
+// Run unit tests as normall
+var result = sut.GetDoorCount();
+```
+Now can unit test the `GetDoorCount` method without the cache getting in the way. 
+
+Note: If you're using the `Mediatr` automatic caching you don't need this.
