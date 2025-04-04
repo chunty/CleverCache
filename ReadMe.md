@@ -1,6 +1,36 @@
-# Setup
+CleverCache
+====================================================
+- [NuGet Package](https://www.nuget.org/packages/clevercache)
 
-1. Add the services:
+**CleverCache** was designed to try and solve the problem having to remember (or know when) to invalidate cache entries
+when the data in them is out of date. This often particularly hard when cache entries contain data from multiple entities
+a change in any of them effectively means the cached data is now wrong. Trying to do this manually often causes 
+cross-cutting concerns and invariably we forget something important which proves to be a right pain in the butt.
+
+With a small amount of configuration **CleverCache** will automatically track changes in your database context
+and reset the cache for any entity if an entity of that type is create, updated or deleted, and - if required, 
+any related entity where data is also part of the same cache entry.
+
+Out the box CleverCache also handles problems with race conditions when using cache.
+
+>_BONUS:_ If you're using Mediatr, CleverCache can automatically cache results but using a pipeline behaviour with minimal changes
+to your existing code.
+
+# Installing CleverCache
+You should install CleverCache with NuGet:
+```
+Install-Package CleverCache
+```
+Or via the .NET Core command line interface:
+```
+dotnet add package CleverCache
+```
+Either commands, from Package Manager Console or .NET Core CLI, will download and install 
+CleverCache and all required dependencies.
+
+# Get Started
+
+1. Register the services:
     ```csharp
     builder.Services.AddCleverCache();
     ```
@@ -54,7 +84,8 @@
     ```
 
 # Usage
-You create cache in the same way you would when using MemoryCache but specify an additional type parameter like this to associate a given type with a cache key:
+You create cache in the same way you would when using MemoryCache, but specify an additional type parameter as shown below 
+to associate a given type with a cache key:
 ```csharp
     var myItem = await cache.GetOrCreateAsync(
 	    typeof(MyEntityType),
@@ -66,14 +97,17 @@ You create cache in the same way you would when using MemoryCache but specify an
     ) ?? [];
 ```
 
-The interceptor tracks when any instance of MyEntityType is added, changed or deleted and will clear all cache keys associated with that type
+The interceptor tracks when any instance of `MyEntityType` is added, changed or deleted and will clear all 
+cache keys associated with that type.
 
 # Dependent Caches
 Often you have information in a cache entry that contains data from multiple entity types 
 and the caches needs to be refreshed if ANY of the types changes not
 just the primary object.
 
-You can create these association manually on a type by type basis by calling:
+> tl;dr: See the `DependantCaches` attribute below
+
+You can create these associations manually on a type by type basis by calling:
 ```csharp
 cache.AddKeyToType(type, key);
 ```
@@ -82,16 +116,16 @@ or more succinctly:
 cache.AddKeyToType<OtherType>(key);
 ```
 
-You can also do multiple types in one call by calling:
+You can also do multiple types in one call by doing:
 ```csharp
 cache.AddKeyToTypes(arrayOfTypes, key);
 ```
 
 You can also do it by specifying an array of types when calling any of the create methods.
 
-However this can be tiresome and result in repetitive code. If you know 
-you often need to do this for a given entity you configure it globally via
-an attribute on the class like this:
+However, this can be tiresome and result in repetitive code. If you know 
+you often need to do this for a given entity you can configure it globally via
+an attribute on the entity class like this:
 
 ```csharp
 [DependantCaches([typeof(ThingTwo),typeof(ThingThree)])]
@@ -106,7 +140,7 @@ public class ThingThree;
 ```
 This will automatically register any keys for `ThingOne` with `ThingTwo` and `ThingThree` 
 so changes to any object of these types will clear the cache key. You can also reverse these
-mapping by using `reverse: true` in the attribute. This will register `ThingTwo` and `ThingThree` with `ThingOne`
+mappings by using `reverse: true` in the attribute. This will register `ThingTwo` and `ThingThree` with `ThingOne`
 
 # Auto caching mediatr queries
 This is a really powerful tool that enables you to quickly add caching to your mediatr queries without any changes 
@@ -121,7 +155,6 @@ services.AddMediatR(cfg =>
 	cfg.AddCleverCache(); // Registers the mediatr pipeline behaviour
 });
 ```
-
 Then simply add the following attribute to any query you want to cache, specifing the type(s) 
 you want the cache for:
 ```csharp
