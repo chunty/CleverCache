@@ -1,6 +1,7 @@
 CleverCache
 ====================================================
-- [NuGet Package](https://www.nuget.org/packages/clevercache)
+[![NuGet](https://img.shields.io/nuget/dt/clevercache.svg)](https://www.nuget.org/packages/clevercache) 
+[![NuGet](https://img.shields.io/nuget/vpre/clevercache.svg)](https://www.nuget.org/packages/clevercache)
 
 **CleverCache** was designed to try and solve the problem having to remember (or know when) to invalidate cache entries
 when the data in them is out of date. This often particularly hard when cache entries contain data from multiple entities
