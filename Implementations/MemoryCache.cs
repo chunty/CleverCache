@@ -16,7 +16,7 @@ public class CleverMemoryCache(IMemoryCache memoryCache) : CacheEntryManager, IC
 		try
 		{
 			// Prevent race conditions
-			_semaphore.Wait();
+			//_semaphore.Wait();
 
 			using var entry = CreateEntry(types, key);
 
@@ -32,7 +32,7 @@ public class CleverMemoryCache(IMemoryCache memoryCache) : CacheEntryManager, IC
 		}
 		finally
 		{
-			_semaphore.Release();
+			//_semaphore.Release();
 		}
 	}
 
@@ -50,7 +50,7 @@ public class CleverMemoryCache(IMemoryCache memoryCache) : CacheEntryManager, IC
 		try
 		{
 			// Prevent race conditions
-			await _semaphore.WaitAsync();
+			//await _semaphore.WaitAsync();
 
 			using var entry = CreateEntry(types, key);
 
@@ -66,7 +66,7 @@ public class CleverMemoryCache(IMemoryCache memoryCache) : CacheEntryManager, IC
 		}
 		finally
 		{
-			_semaphore.Release();
+			//_semaphore.Release();
 		}
 	}
 
