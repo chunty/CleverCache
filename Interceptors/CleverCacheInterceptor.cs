@@ -7,6 +7,40 @@ namespace CleverCache.Interceptors;
 /// </summary>
 public class CleverCacheInterceptor(ICleverCache cache) : SaveChangesInterceptor
 {
+	private readonly List<Type> _types = [];
+
+	public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
+	{
+		return SavingChangesAsync(eventData, result).AsTask().GetAwaiter().GetResult();
+	}
+
+	public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData,
+		InterceptionResult<int> result,
+		CancellationToken cancellationToken = default)
+	{
+		// If the context is null, call the base method.
+		if (eventData.Context is null)
+		{
+			return await base.SavingChangesAsync(eventData, result, cancellationToken);
+		}
+
+		// Get the distinct types of the entities that have changed. We have to do this here because
+		// in "SavedChangesAsync" the ChangeTracker does not contain deleted entities
+		var types = eventData.Context.ChangeTracker
+			.Entries()
+			.Select(x => x.Entity.GetType())
+			.Distinct();
+
+		if (types is not null)
+		{
+			// Add the types to the list.
+			_types.AddRange(types);
+		}
+
+		return await base.SavingChangesAsync(eventData, result, cancellationToken);
+	}
+
+
 	/// <summary>
 	/// Synchronously handles the event after changes are saved to the database.
 	/// </summary>
@@ -34,15 +68,9 @@ public class CleverCacheInterceptor(ICleverCache cache) : SaveChangesInterceptor
 		{
 			return await base.SavedChangesAsync(eventData, result, cancellationToken);
 		}
-
-		// Get the distinct types of the entities that have changed.
-		var types = eventData.Context.ChangeTracker
-			.Entries()
-			.Select(x => x.Entity.GetType())
-			.Distinct();
-
+		
 		// Remove cache entries for each type.
-		foreach (var type in types)
+		foreach (var type in _types ?? [])
 		{
 			cache.RemoveByType(type);
 		}

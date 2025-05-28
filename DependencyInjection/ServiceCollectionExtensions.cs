@@ -22,10 +22,10 @@ public static class ServiceCollectionExtensions
 		services.TryAddSingleton<ICleverCache, CleverMemoryCache>();
 
 		// Register the Smart Cache Interceptor as Service
-		services.TryAddSingleton<CleverCacheInterceptor>();
+		services.TryAddScoped<CleverCacheInterceptor>();
 
 		// Register the Smart Cache Interceptor as Interceptor
-		services.AddSingleton<IInterceptor, CleverCacheInterceptor>();
+		services.AddScoped<IInterceptor, CleverCacheInterceptor>();
 
 		return services;
 	}
