@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore.Diagnostics;
+using System.Collections.Concurrent;
 
 namespace CleverCache.Interceptors;
 
@@ -7,38 +8,23 @@ namespace CleverCache.Interceptors;
 /// </summary>
 public class CleverCacheInterceptor(ICleverCache cache) : SaveChangesInterceptor
 {
-	private readonly List<Type> _types = [];
+	// Keep pending types per DbContext to avoid cross-talk and races.
+	private readonly ConcurrentDictionary<DbContextId, HashSet<Type>> _pendingTypes = new();
 
 	public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
 	{
-		return SavingChangesAsync(eventData, result).AsTask().GetAwaiter().GetResult();
+		CaptureTypes(eventData);
+		return result;
 	}
 
-	public override async ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData,
-		InterceptionResult<int> result,
-		CancellationToken cancellationToken = default)
-	{
-		// If the context is null, call the base method.
-		if (eventData.Context is null)
-		{
-			return await base.SavingChangesAsync(eventData, result, cancellationToken);
-		}
-
-		// Get the distinct types of the entities that have changed. We have to do this here because
-		// in "SavedChangesAsync" the ChangeTracker does not contain deleted entities
-		var types = eventData.Context.ChangeTracker
-			.Entries()
-			.Select(x => x.Entity.GetType())
-			.Distinct();
-
-		if (types is not null)
-		{
-			// Add the types to the list.
-			_types.AddRange(types);
-		}
-
-		return await base.SavingChangesAsync(eventData, result, cancellationToken);
-	}
+	public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
+        DbContextEventData eventData,
+        InterceptionResult<int> result,
+        CancellationToken cancellationToken = default)
+    {
+        CaptureTypes(eventData);
+        return base.SavingChangesAsync(eventData, result, cancellationToken);
+    }
 
 
 	/// <summary>
@@ -49,8 +35,8 @@ public class CleverCacheInterceptor(ICleverCache cache) : SaveChangesInterceptor
 	/// <returns>The result of the save operation.</returns>
 	public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
 	{
-		// Call the asynchronous method and wait for its completion.
-		return SavedChangesAsync(eventData, result).AsTask().GetAwaiter().GetResult();
+		InvalidateAndClear(eventData);
+		return base.SavedChanges(eventData, result);
 	}
 
 	/// <summary>
@@ -60,22 +46,62 @@ public class CleverCacheInterceptor(ICleverCache cache) : SaveChangesInterceptor
 	/// <param name="result">The result of the save operation.</param>
 	/// <param name="cancellationToken">The cancellation token.</param>
 	/// <returns>The result of the save operation.</returns>
-	public override async ValueTask<int> SavedChangesAsync(SaveChangesCompletedEventData eventData, int result,
+	public override ValueTask<int> SavedChangesAsync(
+		SaveChangesCompletedEventData eventData,
+		int result,
 		CancellationToken cancellationToken = default)
 	{
-		// If the context is null, call the base method.
-		if (eventData.Context is null)
-		{
-			return await base.SavedChangesAsync(eventData, result, cancellationToken);
-		}
-		
-		// Remove cache entries for each type.
-		foreach (var type in _types ?? [])
-		{
-			cache.RemoveByType(type);
-		}
+		InvalidateAndClear(eventData);
+		return base.SavedChangesAsync(eventData, result, cancellationToken);
+	}
 
-		// Call the base method.
-		return await base.SavedChangesAsync(eventData, result, cancellationToken);
+	public override void SaveChangesFailed(DbContextErrorEventData eventData)
+	{
+		// Guard for null Context (defensive; eventData.Context is nullable)
+		if (eventData.Context != null)
+		{
+			_pendingTypes.TryRemove(eventData.Context.ContextId, out _);
+		}
+		base.SaveChangesFailed(eventData);
+	}
+
+	public override Task SaveChangesFailedAsync(
+		DbContextErrorEventData eventData,
+		CancellationToken cancellationToken = default)
+	{
+		if (eventData.Context != null)
+		{
+			_pendingTypes.TryRemove(eventData.Context.ContextId, out _);
+		}
+		return base.SaveChangesFailedAsync(eventData, cancellationToken);
+	}
+
+	private void CaptureTypes(DbContextEventData eventData)
+	{
+		if (eventData.Context is null) return;
+
+		var contextId = eventData.Context.ContextId;
+
+		var set = _pendingTypes.GetOrAdd(contextId, _ => new HashSet<Type>());
+		foreach (var entry in eventData.Context.ChangeTracker.Entries())
+		{
+			if (entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
+			{
+				set.Add(entry.Metadata.ClrType);
+			}
+		}
+	}
+
+	private void InvalidateAndClear(SaveChangesCompletedEventData eventData)
+	{
+		if (eventData.Context is null) return;
+
+		if (_pendingTypes.TryRemove(eventData.Context.ContextId, out var types) && types is { Count: > 0 })
+		{
+			foreach (var t in types)
+			{
+				cache.RemoveByType(t);
+			}
+		}
 	}
 }
