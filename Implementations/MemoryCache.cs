@@ -3,84 +3,43 @@
 /// <inheritdoc cref="ICleverCache"/>
 public class CleverMemoryCache(IMemoryCache memoryCache) : CacheEntryManager, ICleverCache
 {
-	private readonly SemaphoreSlim _semaphore = new(1, 1);
-	
-	/// <inheritdoc />
-	public TItem? GetOrCreate<TItem>(Type[] types, object key, Func<ICacheEntry, TItem> factory, MemoryCacheEntryOptions? createOptions = null)
+	public TItem? GetOrCreate<TItem>(Type[] types, object key, Func<ICacheEntry, TItem> factory, MemoryCacheEntryOptions? options = null)
 	{
-		if (memoryCache.TryGetValue(key, out var result))
-		{
-			return (TItem?)result;
-		}
+		if (memoryCache.TryGetValue(key, out var hit)) return (TItem?)hit;
 
-		try
-		{
-			// Prevent race conditions
-			//_semaphore.Wait();
+		using var entry = memoryCache.CreateEntry(key);
+		if (options is not null) entry.SetOptions(options);
 
-			using var entry = CreateEntry(types, key);
+		// Track (adds key to all types+dependents) + auto-untrack on eviction
+		TrackWithEviction(entry, types, key);
 
-			if (createOptions != null)
-			{
-				entry.SetOptions(createOptions);
-			}
-
-			result = factory(entry);
-			entry.Value = result;
-
-			return (TItem?)result;
-		}
-		finally
-		{
-			//_semaphore.Release();
-		}
+		var value = factory(entry);
+		entry.Value = value;
+		return (TItem?)value;
 	}
 
-	/// <inheritdoc />
-	public async Task<TItem?> GetOrCreateAsync<TItem>(Type[] types,
-		object key,
-		Func<ICacheEntry, Task<TItem>> factory,
-		MemoryCacheEntryOptions? createOptions = null)
+	public async Task<TItem?> GetOrCreateAsync<TItem>(Type[] types, object key, Func<ICacheEntry, Task<TItem>> factory, MemoryCacheEntryOptions? options = null)
 	{
-		if (memoryCache.TryGetValue(key, out var result))
-		{
-			return (TItem?)result;
-		}
+		if (memoryCache.TryGetValue(key, out var hit)) return (TItem?)hit;
 
-		try
-		{
-			// Prevent race conditions
-			//await _semaphore.WaitAsync();
-
-			using var entry = CreateEntry(types, key);
-
-			if (createOptions != null)
-			{
-				entry.SetOptions(createOptions);
-			}
-
-			result = await factory(entry).ConfigureAwait(false);
-			entry.Value = result;
-
-			return (TItem?)result;
-		}
-		finally
-		{
-			//_semaphore.Release();
-		}
+		using var entry = memoryCache.CreateEntry(key);
+		if (options is not null) entry.SetOptions(options);
+		
+		var value = await factory(entry).ConfigureAwait(false);
+		entry.Value = value;
+		return (TItem?)value;
 	}
 
-
-	/// <inheritdoc />
 	public void RemoveByType(Type type)
 	{
-		foreach (var entry in CacheEntries.Where(x => x.Type == type))
+		var keys = SnapshotKeysFor(type);      // snapshot avoids races
+		foreach (var k in keys)
 		{
-			Remove(entry.Key);
+			memoryCache.Remove(k);
+			UntrackKeyFor(type, k);            // optional; eviction callback also clears
 		}
 	}
 
-	/// <inheritdoc />
 	public void Remove(object key) => memoryCache.Remove(key);
 
 
@@ -95,7 +54,7 @@ public class CleverMemoryCache(IMemoryCache memoryCache) : CacheEntryManager, IC
 	private ICacheEntry CreateEntry(Type[] types, object key)
 	{
 		var result = memoryCache.CreateEntry(key);
-		AddKeyToTypes(types, key);
+		TrackWithEviction(result, types, key);
 		return result;
 	}
 }
