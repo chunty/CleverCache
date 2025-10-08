@@ -33,8 +33,7 @@ public abstract class CacheEntryManager : ICacheEntryManager
 	{
 		// Record now …
 		AddKeyToTypes(types, key);
-		Console.WriteLine($"{key} => {string.Join(":", types.Select(x => x.FullName).ToList())}");
-
+		
 		// …and clean up when the entry goes away.
 		var all = ExpandTransitively(types);
 		entry.RegisterPostEvictionCallback((k, _, __, ___) =>

@@ -98,7 +98,7 @@ public class CleverCacheInterceptor(ICleverCache cache) : SaveChangesInterceptor
 
 		if (_pendingTypes.TryRemove(eventData.Context.ContextId, out var types) && types is { Count: > 0 })
 		{
-			foreach (var t in types)
+			foreach (var t in types.Distinct())
 			{
 				cache.RemoveByType(t);
 			}

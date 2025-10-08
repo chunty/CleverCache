@@ -24,7 +24,10 @@ public class CleverMemoryCache(IMemoryCache memoryCache) : CacheEntryManager, IC
 
 		using var entry = memoryCache.CreateEntry(key);
 		if (options is not null) entry.SetOptions(options);
-		
+
+		// Track (adds key to all types+dependents) + auto-untrack on eviction
+		TrackWithEviction(entry, types, key);
+
 		var value = await factory(entry).ConfigureAwait(false);
 		entry.Value = value;
 		return (TItem?)value;
