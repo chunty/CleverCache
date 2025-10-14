@@ -4,7 +4,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<PackageId>CleverCache</PackageId>
-		<Version>1.0.10</Version>
+		<Version>1.0.13</Version>
 		<Authors>Chris Hunt</Authors>
 		<Company>TappetyClick</Company>
 		<Description>Like MemoryCache but better! You never need to worry about clearing cache again.</Description>
@@ -21,8 +21,8 @@
 	<ItemGroup>
 		<PackageReference Include="MediatR" Version="[12.5.0,13.0.0)" />
 		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
-		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.5" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.5" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.9" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
 	</ItemGroup>
 	<ItemGroup>
 		<None Include="ReadMe.md" Pack="true" PackagePath="ReadMe.md" />

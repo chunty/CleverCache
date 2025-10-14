@@ -7,54 +7,50 @@ public class CleverMemoryCache(IMemoryCache memoryCache) : CacheEntryManager, IC
 	{
 		if (memoryCache.TryGetValue(key, out var hit)) return (TItem?)hit;
 
-		using var entry = memoryCache.CreateEntry(key);
-		if (options is not null) entry.SetOptions(options);
-
-		// Track (adds key to all types+dependents) + auto-untrack on eviction
-		TrackWithEviction(entry, types, key);
-
-		var value = factory(entry);
-		entry.Value = value;
-		return (TItem?)value;
+		using var entry = GetCacheEntry(types, key, options);
+		return SetEntryValue(factory(entry), entry);
 	}
 
 	public async Task<TItem?> GetOrCreateAsync<TItem>(Type[] types, object key, Func<ICacheEntry, Task<TItem>> factory, MemoryCacheEntryOptions? options = null)
 	{
 		if (memoryCache.TryGetValue(key, out var hit)) return (TItem?)hit;
 
-		using var entry = memoryCache.CreateEntry(key);
-		if (options is not null) entry.SetOptions(options);
-		
-		var value = await factory(entry).ConfigureAwait(false);
-		entry.Value = value;
-		return (TItem?)value;
+		using var entry = GetCacheEntry(types, key, options);
+		return SetEntryValue(await factory(entry).ConfigureAwait(false), entry);
 	}
 
 	public void RemoveByType(Type type)
 	{
-		var keys = SnapshotKeysFor(type);      // snapshot avoids races
-		foreach (var k in keys)
+		// snapshot avoids races
+		foreach (var k in SnapshotKeysFor(type))
 		{
 			memoryCache.Remove(k);
-			UntrackKeyFor(type, k);            // optional; eviction callback also clears
 		}
 	}
 
 	public void Remove(object key) => memoryCache.Remove(key);
 
-
-	/* Private methods */
-
-	/// <summary>
-	/// Creates a cache entry for the specified types and key.
-	/// </summary>
-	/// <param name="types">An array of types the cache key belongs to.</param>
-	/// <param name="key">The key of the cache entry to create.</param>
-	/// <returns>The created cache entry.</returns>
-	private ICacheEntry CreateEntry(Type[] types, object key)
+	private static TItem? SetEntryValue<TItem>(TItem value, ICacheEntry entry)
 	{
-		var result = memoryCache.CreateEntry(key);
-		TrackWithEviction(result, types, key);
-		return result;
+		entry.Value = value;
+		return (TItem?)entry.Value;
 	}
+
+	private ICacheEntry GetCacheEntry(Type[] types, object key, MemoryCacheEntryOptions? options)
+	{
+		ICacheEntry? entry = null;
+		try
+		{
+			AddKeyToTypes(types, key);
+			entry = memoryCache.CreateEntry(key);
+			if (options is not null) entry.SetOptions(options);
+			return entry;
+		}
+		catch
+		{
+			entry?.Dispose();
+			throw;
+		}
+	}
+
 }
