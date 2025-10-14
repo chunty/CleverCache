@@ -35,8 +35,9 @@ public class CleverCacheInterceptor(ICleverCache cache) : SaveChangesInterceptor
 	/// <returns>The result of the save operation.</returns>
 	public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
 	{
+		var savedChanges  = base.SavedChanges(eventData, result);
 		InvalidateAndClear(eventData);
-		return base.SavedChanges(eventData, result);
+		return savedChanges;
 	}
 
 	/// <summary>
@@ -51,8 +52,9 @@ public class CleverCacheInterceptor(ICleverCache cache) : SaveChangesInterceptor
 		int result,
 		CancellationToken cancellationToken = default)
 	{
+		var savedChanges = base.SavedChangesAsync(eventData, result, cancellationToken);
 		InvalidateAndClear(eventData);
-		return base.SavedChangesAsync(eventData, result, cancellationToken);
+		return savedChanges;
 	}
 
 	public override void SaveChangesFailed(DbContextErrorEventData eventData)
@@ -82,7 +84,7 @@ public class CleverCacheInterceptor(ICleverCache cache) : SaveChangesInterceptor
 
 		var contextId = eventData.Context.ContextId;
 
-		var set = _pendingTypes.GetOrAdd(contextId, _ => new HashSet<Type>());
+		var set = _pendingTypes.GetOrAdd(contextId, _ => []);
 		foreach (var entry in eventData.Context.ChangeTracker.Entries())
 		{
 			if (entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
@@ -91,17 +93,15 @@ public class CleverCacheInterceptor(ICleverCache cache) : SaveChangesInterceptor
 			}
 		}
 	}
-
+	 
 	private void InvalidateAndClear(SaveChangesCompletedEventData eventData)
 	{
 		if (eventData.Context is null) return;
 
-		if (_pendingTypes.TryRemove(eventData.Context.ContextId, out var types) && types is { Count: > 0 })
+		if (!_pendingTypes.TryRemove(eventData.Context.ContextId, out var types) || types is not { Count: > 0 }) return;
+		foreach (var t in types.Distinct())
 		{
-			foreach (var t in types.Distinct())
-			{
-				cache.RemoveByType(t);
-			}
+			cache.RemoveByType(t);
 		}
 	}
 }
