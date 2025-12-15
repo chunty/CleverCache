@@ -12,7 +12,7 @@ With a small amount of configuration **CleverCache** will automatically track ch
 and reset the cache for any entity if an entity of that type is create, updated or deleted, and - if required, 
 any related entity where data is also part of the same cache entry.
 
->_BONUS:_ If you're using Mediatr, CleverCache can automatically cache results but using a pipeline behaviour with minimal changes
+>_BONUS:_ If you're using MediatR, CleverCache can automatically cache results but using a pipeline behaviour with minimal changes
 to your existing code.
 
 ## Installing CleverCache
