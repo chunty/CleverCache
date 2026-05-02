@@ -4,6 +4,5 @@ public enum DependentCacheNavigationScanMode
 {
 	None,
 	Direct,
-	Recursive/*,
-	Attribute*/
+	Recursive
 }

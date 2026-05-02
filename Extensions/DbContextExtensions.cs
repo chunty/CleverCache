@@ -44,7 +44,7 @@ internal static class DbContextExtensions
 	{
 		// Check if this has attribute
 		var type = entityType.ClrType;
-		var attribute = type.GetCustomAttribute<DependantCachesAttribute>();
+		var attribute = type.GetCustomAttribute<DependentCachesAttribute>();
 		if (attribute is null)
 		{
 			return;

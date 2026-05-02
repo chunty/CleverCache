@@ -1,7 +1,7 @@
 ﻿namespace CleverCache.Attributes;
 
 [AttributeUsage(AttributeTargets.Class)]
-public class DependantCachesAttribute(
+public class DependentCachesAttribute(
 	Type[] types,
 	DependentCacheNavigationScanMode navigationScanMode = DependentCacheNavigationScanMode.None,
 	bool reverse = false
