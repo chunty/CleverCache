@@ -1,0 +1,28 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <!-- Packages that don't vary by target framework -->
+  <ItemGroup>
+    <PackageVersion Include="AsyncKeyedLock" Version="8.0.2" />
+    <PackageVersion Include="MediatR" Version="[12.5.0,13.0.0)" />
+    <PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
+  </ItemGroup>
+
+  <!-- .NET 9 specific package versions -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.9" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.9" />
+  </ItemGroup>
+
+  <!-- .NET 10 specific package versions -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.7" />
+  </ItemGroup>
+</Project>

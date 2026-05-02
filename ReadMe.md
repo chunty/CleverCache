@@ -12,8 +12,7 @@ With a small amount of configuration **CleverCache** will automatically track ch
 and reset the cache for any entity if an entity of that type is create, updated or deleted, and - if required, 
 any related entity where data is also part of the same cache entry.
 
->_BONUS:_ If you're using Mediatr, CleverCache can automatically cache results but using a pipeline behaviour with minimal changes
-to your existing code.
+>_BONUS:_ MediatR users can install the separate [`CleverCache.MediatR`](https://www.nuget.org/packages/clevercache.mediatr) package for automatic query caching with zero handler changes.
 
 ## Installing CleverCache
 You should install CleverCache with NuGet:
@@ -26,6 +25,50 @@ dotnet add package CleverCache
 ```
 Either commands, from Package Manager Console or .NET Core CLI, will download and install 
 CleverCache and all required dependencies.
+
+## Cache provider
+
+By default CleverCache uses `IMemoryCache`. You can switch to a distributed cache, use the dedicated Redis package, or plug in your own provider:
+
+```csharp
+// Memory cache (default)
+builder.Services.AddCleverCache();
+
+// Redis — install CleverCache.Redis, then:
+builder.Services.AddCleverCache(o => o.UseRedisCache("localhost:6379"));
+
+// Any IDistributedCache backend — register it first, then:
+builder.Services.AddDistributedMemoryCache(); // or AddStackExchangeRedisCache, etc.
+builder.Services.AddCleverCache(o => o.UseDistributedCache());
+
+// Custom provider — implement ICleverCacheStore
+builder.Services.AddCleverCache(o => o.UseCustomStore<MyStore>());
+// or via a factory:
+builder.Services.AddCleverCache(o => o.UseCustomStore(sp => new MyStore(sp.GetRequiredService<IFoo>())));
+```
+
+### Cache entry options
+
+All `GetOrCreate` / `GetOrCreateAsync` overloads accept an optional `CleverCacheEntryOptions`:
+
+```csharp
+var options = new CleverCacheEntryOptions
+{
+    // Expire 10 minutes after the entry was created
+    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10),
+
+    // Or expire at a specific point in time
+    AbsoluteExpiration = DateTimeOffset.UtcNow.AddHours(1),
+
+    // Extend lifetime on each read (memory cache only)
+    SlidingExpiration = TimeSpan.FromMinutes(5),
+};
+
+var result = await cache.GetOrCreateAsync<MyEntity, List<Result>>(
+    key,
+    async () => await db.Results.ToListAsync(),
+    options);
+```
 
 ## Get Started
 
@@ -83,21 +126,25 @@ CleverCache and all required dependencies.
     ```
 
 ## Usage
-You create cache in the same way you would when using MemoryCache, but specify an additional type parameter as shown below 
-to associate a given type with a cache key:
+You create cache entries in the same way you would with MemoryCache, but specify an additional type parameter to associate a given type with a cache key:
 ```csharp
-    var myItem = await cache.GetOrCreateAsync(
-	    typeof(MyEntityType),
-	    cacheKey,
-	    _ => 
-	    {
-		    //return <Do real query for data>;
-	    }
-    ) ?? [];
+// Generic shorthand — associate with a single type
+var myItems = await cache.GetOrCreateAsync<MyEntityType, List<MyItem>>(
+    cacheKey,
+    async () => await db.MyItems.ToListAsync()
+) ?? [];
 ```
 
-The interceptor tracks when any instance of `MyEntityType` is added, changed or deleted and will clear all 
-cache keys associated with that type.
+The interceptor tracks when any instance of `MyEntityType` is added, changed or deleted and clears all cache keys associated with that type.
+
+You can also supply cache entry options:
+```csharp
+var myItems = await cache.GetOrCreateAsync<MyEntityType, List<MyItem>>(
+    cacheKey,
+    async () => await db.MyItems.ToListAsync(),
+    new CleverCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10) }
+) ?? [];
+```
 
 ## Dependent Caches
 Often you have information in a cache entry that contains data from multiple entity types 
@@ -141,11 +188,14 @@ This will automatically register any keys for `ThingOne` with `ThingTwo` and `Th
 so changes to any object of these types will clear the cache key. You can also reverse these
 mappings by using `reverse: true` in the attribute. This will register `ThingTwo` and `ThingThree` with `ThingOne`
 
-## Auto caching mediatr queries
-This is a really powerful tool that enables you to quickly add caching to your mediatr queries without any changes 
-to your handlers.
+## Auto caching MediatR queries
+This is available via the separate **[CleverCache.MediatR](https://www.nuget.org/packages/clevercache.mediatr)** package — install it to keep your main project free of the MediatR dependency.
 
-Add the following to your mediatr setup:
+```
+Install-Package CleverCache.MediatR
+```
+
+Add the following to your MediatR setup:
 
 ```csharp
 services.AddMediatR(cfg =>
@@ -162,6 +212,95 @@ public record MyQuery : IRequest;
 ```
 This uses the mediatr request as the cache key so you can use the same query with different parameters 
 and it will cache each one separately.
+
+## Redis cache
+
+Install the dedicated **[CleverCache.Redis](https://www.nuget.org/packages/clevercache.redis)** package to add Redis support without bringing the StackExchange.Redis dependency into your main project.
+
+```
+Install-Package CleverCache.Redis
+```
+
+```csharp
+// Simple connection string
+builder.Services.AddCleverCache(o => o.UseRedisCache("localhost:6379"));
+
+// Full Redis options
+builder.Services.AddCleverCache(o => o.UseRedisCache(redis =>
+{
+    redis.Configuration = "localhost:6379";
+    redis.InstanceName = "MyApp:";
+}));
+```
+
+## Custom cache store
+
+Implement `ICleverCacheStore` to plug in any backing store:
+
+```csharp
+public interface ICleverCacheStore
+{
+    bool TryGet<TItem>(object key, out TItem? value);
+    Task<(bool Hit, TItem? Value)> TryGetAsync<TItem>(object key, CancellationToken cancellationToken = default);
+    void Set<TItem>(object key, TItem value, CleverCacheEntryOptions? options = null);
+    Task SetAsync<TItem>(object key, TItem value, CleverCacheEntryOptions? options = null, CancellationToken cancellationToken = default);
+    void Remove(object key);
+    Task RemoveAsync(object key, CancellationToken cancellationToken = default);
+}
+```
+
+Example — a simple in-memory dictionary store:
+
+```csharp
+public class DictionaryCacheStore : ICleverCacheStore
+{
+    private readonly Dictionary<string, object?> _store = new();
+
+    private static string Key<TItem>(object key) => $"{typeof(TItem).FullName}:{key}";
+
+    public bool TryGet<TItem>(object key, out TItem? value)
+    {
+        if (_store.TryGetValue(Key<TItem>(key), out var hit))
+        {
+            value = (TItem?)hit;
+            return true;
+        }
+        value = default;
+        return false;
+    }
+
+    public Task<(bool Hit, TItem? Value)> TryGetAsync<TItem>(object key, CancellationToken cancellationToken = default)
+    {
+        var found = TryGet<TItem>(key, out var value);
+        return Task.FromResult((found, value));
+    }
+
+    public void Set<TItem>(object key, TItem value, CleverCacheEntryOptions? options = null)
+        => _store[Key<TItem>(key)] = value;
+
+    public Task SetAsync<TItem>(object key, TItem value, CleverCacheEntryOptions? options = null, CancellationToken cancellationToken = default)
+    {
+        Set(key, value, options);
+        return Task.CompletedTask;
+    }
+
+    public void Remove(object key) => _store.Remove(Key<object>(key));
+
+    public Task RemoveAsync(object key, CancellationToken cancellationToken = default)
+    {
+        Remove(key);
+        return Task.CompletedTask;
+    }
+}
+```
+
+Register it with:
+
+```csharp
+builder.Services.AddCleverCache(o => o.UseCustomStore<DictionaryCacheStore>());
+// or via a factory:
+builder.Services.AddCleverCache(o => o.UseCustomStore(sp => new DictionaryCacheStore()));
+```
 
 ## Unit testing
 Unit testing methods that use cache is generally fiddly, to help with this **CleverCache** is shipped with a 

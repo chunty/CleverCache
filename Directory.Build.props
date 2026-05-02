@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Authors>Chris Hunt</Authors>
+    <Company>TappetyClick</Company>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/chunty/CleverCache</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/chunty/CleverCache</PackageProjectUrl>
+  </PropertyGroup>
+</Project>

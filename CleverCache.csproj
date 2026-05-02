@@ -1,30 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>net9.0</TargetFramework>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
 		<PackageId>CleverCache</PackageId>
-		<Version>1.0.13</Version>
-		<Authors>Chris Hunt</Authors>
-		<Company>TappetyClick</Company>
-		<Description>Like MemoryCache but better! You never need to worry about clearing cache again.</Description>
-		<PackageTags>MemoryCache,Automatic Cache</PackageTags>
-		<PackageReadmeFile>ReadMe.md</PackageReadmeFile>
-		<!-- License info -->
-		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<!-- Repository info -->
-		<RepositoryUrl>https://github.com/chunty/CleverCache</RepositoryUrl>
-		<RepositoryType>git</RepositoryType>
-		<!-- Optional: show project URL -->
-		<PackageProjectUrl>https://github.com/chunty/CleverCache</PackageProjectUrl>
+		<Version>2.0.0</Version>
+		<Description>Like MemoryCache but better! Automatically invalidates cache by entity type, supports memory cache, distributed cache, or a custom provider.</Description>
+		<PackageTags>MemoryCache,DistributedCache,Automatic Cache,Cache Invalidation</PackageTags>
+		<PackageReadmeFile>NuGetReadMe.md</PackageReadmeFile>
+		<!-- Prevent the parent project from globbing files in nested sub-projects -->
+		<DefaultItemExcludes>$(DefaultItemExcludes);CleverCache.MediatR\**;CleverCache.Redis\**</DefaultItemExcludes>
 	</PropertyGroup>
 	<ItemGroup>
-		<PackageReference Include="MediatR" Version="[12.5.0,13.0.0)" />
-		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
-		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.9" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
+		<PackageReference Include="AsyncKeyedLock" />
+		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" />
 	</ItemGroup>
 	<ItemGroup>
-		<None Include="ReadMe.md" Pack="true" PackagePath="ReadMe.md" />
+		<None Include="NuGetReadMe.md" Pack="true" PackagePath="NuGetReadMe.md" />
 	</ItemGroup>
 </Project>

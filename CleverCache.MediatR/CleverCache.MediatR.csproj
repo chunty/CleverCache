@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<PackageId>CleverCache.MediatR</PackageId>
+		<Version>2.0.0</Version>
+		<Description>MediatR pipeline integration for CleverCache — automatic caching of MediatR queries via the [AutoCache] attribute.</Description>
+		<PackageTags>MediatR,CleverCache,Cache,Automatic Cache</PackageTags>
+		<PackageReadmeFile>NuGetReadMe.md</PackageReadmeFile>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="MediatR" />
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\CleverCache.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Include="NuGetReadMe.md" Pack="true" PackagePath="NuGetReadMe.md" />
+	</ItemGroup>
+</Project>

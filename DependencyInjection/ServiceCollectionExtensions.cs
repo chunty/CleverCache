@@ -11,15 +11,15 @@ public static class ServiceCollectionExtensions
 	public static IServiceCollection AddCleverCache(this IServiceCollection services,
 		Action<CleverCacheOptions>? options = null)
 	{
-		// Register the Smart Cache Options
 		var localOptions = new CleverCacheOptions();
 		options?.Invoke(localOptions);
 		services.TryAddSingleton(localOptions);
 
-		services.AddMemoryCache();
+		// Register chosen store (defaults to memory)
+		localOptions.StoreRegistration?.Invoke(services);
 
-		// Register ICleverCache
-		services.TryAddSingleton<ICleverCache, CleverMemoryCache>();
+		// Register ICleverCache backed by the store
+		services.TryAddSingleton<ICleverCache, CleverCacheService>();
 
 		// Register the Smart Cache Interceptor as Service
 		services.TryAddScoped<CleverCacheInterceptor>();
