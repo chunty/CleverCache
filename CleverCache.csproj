@@ -6,7 +6,7 @@
 		<PackageTags>MemoryCache,DistributedCache,Automatic Cache,Cache Invalidation</PackageTags>
 		<PackageReadmeFile>NuGetReadMe.md</PackageReadmeFile>
 		<!-- Prevent the parent project from globbing files in nested sub-projects -->
-		<DefaultItemExcludes>$(DefaultItemExcludes);CleverCache.MediatR\**;CleverCache.Redis\**</DefaultItemExcludes>
+		<DefaultItemExcludes>$(DefaultItemExcludes);CleverCache.MediatR\**;CleverCache.Redis\**;CleverCache.Tests\**</DefaultItemExcludes>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="AsyncKeyedLock" />

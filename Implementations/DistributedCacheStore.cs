@@ -9,7 +9,7 @@ public class DistributedCacheStore(IDistributedCache distributedCache) : IClever
 
 	public bool TryGet<TItem>(object key, out TItem? value)
 	{
-		var bytes = distributedCache.Get(ToStringKey<TItem>(key));
+		var bytes = distributedCache.Get(ToStringKey(key));
 		if (bytes is null)
 		{
 			value = default;
@@ -22,7 +22,7 @@ public class DistributedCacheStore(IDistributedCache distributedCache) : IClever
 
 	public async Task<(bool Hit, TItem? Value)> TryGetAsync<TItem>(object key, CancellationToken cancellationToken = default)
 	{
-		var bytes = await distributedCache.GetAsync(ToStringKey<TItem>(key), cancellationToken).ConfigureAwait(false);
+		var bytes = await distributedCache.GetAsync(ToStringKey(key), cancellationToken).ConfigureAwait(false);
 		if (bytes is null) return (false, default);
 
 		var value = JsonSerializer.Deserialize<TItem>(bytes, JsonOptions);
@@ -32,22 +32,22 @@ public class DistributedCacheStore(IDistributedCache distributedCache) : IClever
 	public void Set<TItem>(object key, TItem value, CleverCacheEntryOptions? options = null)
 	{
 		var bytes = JsonSerializer.SerializeToUtf8Bytes(value, JsonOptions);
-		distributedCache.Set(ToStringKey<TItem>(key), bytes, ToDistributedOptions(options));
+		distributedCache.Set(ToStringKey(key), bytes, ToDistributedOptions(options));
 	}
 
 	public async Task SetAsync<TItem>(object key, TItem value, CleverCacheEntryOptions? options = null, CancellationToken cancellationToken = default)
 	{
 		var bytes = JsonSerializer.SerializeToUtf8Bytes(value, JsonOptions);
-		await distributedCache.SetAsync(ToStringKey<TItem>(key), bytes, ToDistributedOptions(options), cancellationToken).ConfigureAwait(false);
+		await distributedCache.SetAsync(ToStringKey(key), bytes, ToDistributedOptions(options), cancellationToken).ConfigureAwait(false);
 	}
 
-	public void Remove(object key) => distributedCache.Remove(ToStringKey<object>(key));
+	public void Remove(object key) => distributedCache.Remove(ToStringKey(key));
 
 	public async Task RemoveAsync(object key, CancellationToken cancellationToken = default) =>
-		await distributedCache.RemoveAsync(ToStringKey<object>(key), cancellationToken).ConfigureAwait(false);
+		await distributedCache.RemoveAsync(ToStringKey(key), cancellationToken).ConfigureAwait(false);
 
-	private static string ToStringKey<TItem>(object key) =>
-		$"{typeof(TItem).FullName}:{JsonSerializer.Serialize(key, JsonOptions)}";
+	private static string ToStringKey(object key) =>
+		JsonSerializer.Serialize(key, JsonOptions);
 
 	private static DistributedCacheEntryOptions ToDistributedOptions(CleverCacheEntryOptions? options) =>
 		options is null
