@@ -3,7 +3,7 @@
 namespace CleverCache.Implementations;
 
 /// <inheritdoc cref="ICleverCache"/>
-public class CleverCacheService(ICleverCacheStore store) : CacheEntryManager, ICleverCache
+internal class CleverCacheService(ICleverCacheStore store) : CacheEntryManager, ICleverCache
 {
 	private readonly AsyncKeyedLocker<object> _locker = new();
 

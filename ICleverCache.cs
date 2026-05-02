@@ -1,7 +1,17 @@
 ﻿namespace CleverCache;
 
-public interface ICleverCache : ICacheEntryManager
+public interface ICleverCache
 {
+	/// <summary>
+	/// Adds a dependent cache type so that invalidating <paramref name="type"/> also invalidates <paramref name="dependentType"/>.
+	/// </summary>
+	void AddDependentCache(Type type, Type dependentType);
+
+	/// <summary>
+	/// Associates the specified key with one or more cache types.
+	/// </summary>
+	void AddKeyToTypes(Type[] types, object key);
+
 	/// <summary>
 	/// Gets the value associated with this key if it exists, or generates a new entry using the provided key and a value from the given factory if the key is not found.
 	/// </summary>

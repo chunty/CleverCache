@@ -1,7 +1,7 @@
 ﻿namespace CleverCache;
 using System.Collections.Concurrent;
 
-public abstract class CacheEntryManager: ICacheEntryManager
+internal abstract class CacheEntryManager
 {
 	// type -> set of keys (thread-safe “set” via ConcurrentDictionary<TKey, byte>)
 	private readonly ConcurrentDictionary<Type, ConcurrentDictionary<object, byte>> _keysByType = new();
