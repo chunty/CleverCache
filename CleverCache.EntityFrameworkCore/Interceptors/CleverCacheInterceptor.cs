@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore.Diagnostics;
 using System.Collections.Concurrent;
 
-namespace CleverCache.Interceptors;
+namespace CleverCache.EntityFrameworkCore.Interceptors;
 
 /// <summary>
 /// Interceptor to clear smart memory cache after changes are saved to the database.
@@ -26,13 +26,6 @@ public class CleverCacheInterceptor(ICleverCache cache) : SaveChangesInterceptor
         return base.SavingChangesAsync(eventData, result, cancellationToken);
     }
 
-
-	/// <summary>
-	/// Synchronously handles the event after changes are saved to the database.
-	/// </summary>
-	/// <param name="eventData">The event data.</param>
-	/// <param name="result">The result of the save operation.</param>
-	/// <returns>The result of the save operation.</returns>
 	public override int SavedChanges(SaveChangesCompletedEventData eventData, int result)
 	{
 		var savedChanges  = base.SavedChanges(eventData, result);
@@ -40,13 +33,6 @@ public class CleverCacheInterceptor(ICleverCache cache) : SaveChangesInterceptor
 		return savedChanges;
 	}
 
-	/// <summary>
-	/// Asynchronously handles the event after changes are saved to the database.
-	/// </summary>
-	/// <param name="eventData">The event data.</param>
-	/// <param name="result">The result of the save operation.</param>
-	/// <param name="cancellationToken">The cancellation token.</param>
-	/// <returns>The result of the save operation.</returns>
 	public override ValueTask<int> SavedChangesAsync(
 		SaveChangesCompletedEventData eventData,
 		int result,
@@ -59,11 +45,8 @@ public class CleverCacheInterceptor(ICleverCache cache) : SaveChangesInterceptor
 
 	public override void SaveChangesFailed(DbContextErrorEventData eventData)
 	{
-		// Guard for null Context (defensive; eventData.Context is nullable)
 		if (eventData.Context != null)
-		{
 			_pendingTypes.TryRemove(eventData.Context.ContextId, out _);
-		}
 		base.SaveChangesFailed(eventData);
 	}
 
@@ -72,9 +55,7 @@ public class CleverCacheInterceptor(ICleverCache cache) : SaveChangesInterceptor
 		CancellationToken cancellationToken = default)
 	{
 		if (eventData.Context != null)
-		{
 			_pendingTypes.TryRemove(eventData.Context.ContextId, out _);
-		}
 		return base.SaveChangesFailedAsync(eventData, cancellationToken);
 	}
 
@@ -83,25 +64,19 @@ public class CleverCacheInterceptor(ICleverCache cache) : SaveChangesInterceptor
 		if (eventData.Context is null) return;
 
 		var contextId = eventData.Context.ContextId;
-
 		var set = _pendingTypes.GetOrAdd(contextId, _ => []);
 		foreach (var entry in eventData.Context.ChangeTracker.Entries())
 		{
 			if (entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
-			{
 				set.Add(entry.Metadata.ClrType);
-			}
 		}
 	}
-	 
+
 	private void InvalidateAndClear(SaveChangesCompletedEventData eventData)
 	{
 		if (eventData.Context is null) return;
-
 		if (!_pendingTypes.TryRemove(eventData.Context.ContextId, out var types) || types is not { Count: > 0 }) return;
 		foreach (var t in types.Distinct())
-		{
 			cache.RemoveByType(t);
-		}
 	}
 }

@@ -1,11 +1,11 @@
 ﻿using System.Reflection;
+using CleverCache.Attributes;
+using CleverCache.EntityFrameworkCore.Exceptions;
+using CleverCache.EntityFrameworkCore.Helpers;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using CleverCache.Attributes;
-using CleverCache.Exceptions;
-using CleverCache.Helpers;
 
-namespace CleverCache.Extensions;
+namespace CleverCache.EntityFrameworkCore.Extensions;
 
 internal static class DbContextExtensions
 {
@@ -19,22 +19,18 @@ internal static class DbContextExtensions
 		if (!isRegistered) throw new MissingInterceptorException();
 	}
 
-	public static List<DependentCache> DiscoverDependentCaches(this DbContext dbContext, CleverCacheOptions smartCacheOptions)
+	public static List<DependentCache> DiscoverDependentCaches(this DbContext dbContext, CleverCacheScanOptions scanOptions)
 	{
 		HashSet<DependentCache> dependentCaches = [];
 
 		foreach (var entityType in dbContext.Model.GetEntityTypes())
 		{
-			if (smartCacheOptions.Scanning.NavigationScanMode != DependentCacheNavigationScanMode.None)
-			{
-				NavigationScanningHelper.Scan(smartCacheOptions.Scanning, entityType, dependentCaches);
-			}
+			if (scanOptions.NavigationScanMode != DependentCacheNavigationScanMode.None)
+				NavigationScanningHelper.Scan(scanOptions, entityType, dependentCaches);
 
-			// Its pointless doing attribute based processing if we already did recursive scanning
-			if (smartCacheOptions.Scanning.NavigationScanMode != DependentCacheNavigationScanMode.Recursive)
-			{
+			// Attribute processing is redundant if recursive scanning already covered the full graph
+			if (scanOptions.NavigationScanMode != DependentCacheNavigationScanMode.Recursive)
 				ProcessAttribute(dbContext, entityType, dependentCaches);
-			}
 		}
 
 		return [.. dependentCaches];
@@ -42,34 +38,21 @@ internal static class DbContextExtensions
 
 	private static void ProcessAttribute(DbContext dbContext, IEntityType entityType, HashSet<DependentCache> dependentCaches)
 	{
-		// Check if this has attribute
 		var type = entityType.ClrType;
 		var attribute = type.GetCustomAttribute<DependentCachesAttribute>();
-		if (attribute is null)
-		{
-			return;
-		}
+		if (attribute is null) return;
 
-		// Do the mappings
 		foreach (var dependentType in attribute.DependantTypes)
 		{
 			dependentCaches.Add(new DependentCache(type, dependentType));
 			if (attribute.Reverse)
-			{
-				dependentCaches.Add(new DependentCache(dependentType, type)); ;
-			}
+				dependentCaches.Add(new DependentCache(dependentType, type));
 
 			if (attribute.NavigationScanMode == DependentCacheNavigationScanMode.None)
-			{
 				continue;
-			}
 
 			var dependentModelType = dbContext.Model.FindEntityType(dependentType);
-
-			if (dependentModelType is null)
-			{
-				continue;
-			}
+			if (dependentModelType is null) continue;
 
 			NavigationScanningHelper.Scan(
 				new CleverCacheScanOptions(attribute.NavigationScanMode, attribute.Reverse),

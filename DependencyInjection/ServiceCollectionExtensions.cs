@@ -1,5 +1,4 @@
 ﻿using CleverCache.Implementations;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 // ReSharper disable IdentifierTypo
@@ -20,12 +19,6 @@ public static class ServiceCollectionExtensions
 
 		// Register ICleverCache backed by the store
 		services.TryAddSingleton<ICleverCache, CleverCacheService>();
-
-		// Register the Smart Cache Interceptor as Service
-		services.TryAddScoped<CleverCacheInterceptor>();
-
-		// Register the Smart Cache Interceptor as Interceptor
-		services.AddScoped<IInterceptor, CleverCacheInterceptor>();
 
 		return services;
 	}

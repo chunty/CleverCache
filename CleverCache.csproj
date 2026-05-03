@@ -7,14 +7,12 @@
 		<PackageTags>MemoryCache,DistributedCache,Automatic Cache,Cache Invalidation</PackageTags>
 		<PackageReadmeFile>NuGetReadMe.md</PackageReadmeFile>
 		<!-- Prevent the parent project from globbing files in nested sub-projects -->
-		<DefaultItemExcludes>$(DefaultItemExcludes);CleverCache.MediatR\**;CleverCache.Redis\**;CleverCache.Tests\**</DefaultItemExcludes>
+		<DefaultItemExcludes>$(DefaultItemExcludes);CleverCache.MediatR\**;CleverCache.Redis\**;CleverCache.Tests\**;CleverCache.EntityFrameworkCore\**</DefaultItemExcludes>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="AsyncKeyedLock" />
-		<PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Memory" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore" />
 	</ItemGroup>
 	<ItemGroup>
 		<None Include="NuGetReadMe.md" Pack="true" PackagePath="NuGetReadMe.md" />

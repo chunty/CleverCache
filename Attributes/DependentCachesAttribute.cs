@@ -2,8 +2,9 @@
 
 /// <summary>
 /// Declares cache dependency relationships for an entity type.
-/// Applied at startup by <c>app.UseCleverCache&lt;TContext&gt;()</c>, which registers the
-/// declared dependencies so that invalidating this type also invalidates the dependent types.
+/// Use <c>builder.Services.AddCleverCache(o => o.ScanAssemblyContaining&lt;T&gt;())</c> to register
+/// these at startup, or pick them up automatically via <c>app.ScanDbSetsForCacheDependencies&lt;TContext&gt;()</c>
+/// if you are using EF Core navigation scanning.
 /// </summary>
 /// <example>
 /// <code>

@@ -8,14 +8,9 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace CleverCache.Models;
 
-public class CleverCacheOptions(CleverCacheScanOptions? scanOptions = null,
-	HashSet<DependentCache>? dependentCaches = null,
-	bool disableAllScanning = false)
+public class CleverCacheOptions(HashSet<DependentCache>? dependentCaches = null)
 {
-	// ReSharper disable once IdentifierTypo
-	public CleverCacheScanOptions Scanning { get; set; } = scanOptions ?? new CleverCacheScanOptions();
 	public HashSet<DependentCache> DependentCaches { get; set; } = dependentCaches ?? [];
-	public bool DisableAllScanning { get; set; } = disableAllScanning;
 
 	/// <summary>
 	/// Scans the assembly containing <typeparamref name="T"/> for <see cref="DependentCachesAttribute"/>
