@@ -12,6 +12,16 @@ With a small amount of configuration **CleverCache** will automatically track ch
 and reset the cache for any entity if an entity of that type is create, updated or deleted, and - if required, 
 any related entity where data is also part of the same cache entry.
 
+> **Automatic invalidation requires Entity Framework Core.** CleverCache hooks into EF Core as a
+> `SaveChangesInterceptor` — cache entries are cleared automatically when `SaveChanges` or
+> `SaveChangesAsync` completes. If you write data outside EF Core's change tracker (raw SQL via
+> `ExecuteUpdate`/`ExecuteDelete`, stored procedures, or external services) those writes won't
+> trigger automatic invalidation — call `cache.RemoveByType<T>()` manually instead.
+>
+> **No EF Core at all?** You can still use CleverCache for manual invalidation. `RemoveByType<T>()`
+> understands your dependent-cache tree, so one call handles all the cascades — you just trigger it
+> yourself rather than it happening automatically on save.
+
 >_BONUS:_ MediatR users can install the separate [`CleverCache.MediatR`](https://www.nuget.org/packages/clevercache.mediatr) package for automatic query caching with zero handler changes.
 
 ## Installing CleverCache
