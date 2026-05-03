@@ -15,13 +15,15 @@ With a small amount of configuration, CleverCache automatically tracks changes v
 | [MediatR Integration](MediatR-Integration) | `[AutoCache]`, `[InvalidatesCache]`, pipeline setup |
 | [Bulk Operations](Bulk-Operations) | Handling `ExecuteDelete`/`ExecuteUpdate` and non-EF writes |
 | [Unit Testing](Unit-Testing) | `FakeCache`, mocking `ICleverCache` |
+| [Migrating to V2](Migrating-to-V2) | Breaking changes and before/after examples for V1 → V2 |
 
 ## Packages
 
 | Package | NuGet | Purpose |
 |---|---|---|
 | `CleverCache` | [![NuGet](https://img.shields.io/nuget/vpre/clevercache.svg)](https://www.nuget.org/packages/clevercache) | Core package |
+| `CleverCache.EntityFrameworkCore` | [![NuGet](https://img.shields.io/nuget/vpre/clevercache.entityframeworkcore.svg)](https://www.nuget.org/packages/clevercache.entityframeworkcore) | EF Core interceptor and DbSet scanning |
 | `CleverCache.MediatR` | [![NuGet](https://img.shields.io/nuget/vpre/clevercache.mediatr.svg)](https://www.nuget.org/packages/clevercache.mediatr) | MediatR pipeline behaviours |
 | `CleverCache.Redis` | [![NuGet](https://img.shields.io/nuget/vpre/clevercache.redis.svg)](https://www.nuget.org/packages/clevercache.redis) | Redis cache provider |
 
-> **Requires EF Core.** Automatic invalidation hooks into `SaveChanges`/`SaveChangesAsync` via a `SaveChangesInterceptor`. Without EF Core you can still use CleverCache for manual invalidation — see [Bulk Operations](Bulk-Operations).
+> **EF Core.** Automatic invalidation via `SaveChanges` requires the `CleverCache.EntityFrameworkCore` package. Without EF Core you can still use CleverCache for manual invalidation — see [Bulk Operations](Bulk-Operations).
