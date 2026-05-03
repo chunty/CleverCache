@@ -62,7 +62,9 @@ builder.Services.AddCleverCacheEntityFramework(o => o.ScanAssemblyContaining<Ord
 
 ### 3. Update `UseCleverCache` → `ScanDbSetsForCacheDependencies`
 
-`app.UseCleverCache<TContext>()` has been replaced with a more descriptive name that lives on `IApplicationBuilder`. Scan options are now passed directly instead of being stored on `CleverCacheOptions`.
+> **Only needed if you were using navigation scanning.** If you used `UseCleverCache` purely to pick up `[DependantCaches]` attributes, you can simply **remove** the call — attribute registration is now handled separately in step 5.
+
+If you were using navigation scanning, replace `app.UseCleverCache<TContext>()` with `app.ScanDbSetsForCacheDependencies<TContext>()`. Scan options are now passed directly instead of being stored on `CleverCacheOptions`.
 
 **Before:**
 ```csharp
