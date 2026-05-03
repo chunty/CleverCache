@@ -1,4 +1,4 @@
-﻿namespace CleverCache.Implementations;
+﻿namespace CleverCache;
 
 /// <summary>
 /// A fake implementation of the ICleverCache interface for testing purposes.

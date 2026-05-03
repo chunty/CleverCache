@@ -1,5 +1,3 @@
-using CleverCache.Implementations;
-
 namespace CleverCache.Tests;
 
 public class FakeCacheTests

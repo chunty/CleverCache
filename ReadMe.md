@@ -303,17 +303,23 @@ builder.Services.AddCleverCache(o => o.UseCustomStore(sp => new DictionaryCacheS
 ```
 
 ## Unit testing
-Unit testing methods that use cache is generally fiddly, to help with this **CleverCache** is shipped with a 
-`FakeCache` implementation which you can use in your test. The implementation never caches and always calls your 
-underlying method retrieve your data. For example when using `Moq.AutoMocker` you would do this:
+Unit testing methods that use cache is generally fiddly. To help with this, **CleverCache** ships with a
+`FakeCache` implementation. It never caches and always calls your underlying factory, so the cache is
+completely transparent in your tests.
+
 ```csharp
 var mocker = new AutoMocker();
 mocker.Use<ICleverCache>(new FakeCache());
 var sut = mocker.CreateInstance<CarServiceWithCache>();
 
-// Run unit tests as normall
+// Run unit tests as normal
 var result = sut.GetDoorCount();
 ```
-Now can unit test the `GetDoorCount` method without the cache getting in the way. 
+Now you can unit test the `GetDoorCount` method without the cache getting in the way.
 
-Note: If you're using the `Mediatr` automatic caching you don't need this.
+If you need to **verify cache interactions** (e.g. assert the factory was called exactly once, or that
+a specific key was used), use `Mock<ICleverCache>` directly instead — `ICleverCache` is a plain interface
+and works with any mocking library.
+
+> **Note:** If you are *only* using the MediatR automatic caching (`[AutoCache]`) and never injecting
+> `ICleverCache` into your own services, you don't need `FakeCache` at all.
