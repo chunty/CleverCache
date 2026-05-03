@@ -26,7 +26,7 @@ public class AutoCacheBehaviourTests
 
         Assert.Equal(2, callCount);
         cacheMock.Verify(c => c.GetOrCreateAsync(
-            It.IsAny<Type[]>(), It.IsAny<object>(), It.IsAny<Func<Task<string>>>(), It.IsAny<CleverCacheEntryOptions>()), Times.Never);
+            It.IsAny<Type[]>(), It.IsAny<object>(), It.IsAny<Func<Task<string>>>(), It.IsAny<CleverCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -35,8 +35,8 @@ public class AutoCacheBehaviourTests
         var cacheMock = new Mock<ICleverCache>();
         cacheMock
             .Setup(c => c.GetOrCreateAsync(
-                It.IsAny<Type[]>(), It.IsAny<object>(), It.IsAny<Func<Task<string>>>(), It.IsAny<CleverCacheEntryOptions>()))
-            .Returns<Type[], object, Func<Task<string?>>, CleverCacheEntryOptions?>((_, _, factory, _) => factory());
+                It.IsAny<Type[]>(), It.IsAny<object>(), It.IsAny<Func<Task<string>>>(), It.IsAny<CleverCacheEntryOptions>(), It.IsAny<CancellationToken>()))
+            .Returns<Type[], object, Func<Task<string?>>, CleverCacheEntryOptions?, CancellationToken>((_, _, factory, _, _) => factory());
 
         var sut = new AutoCacheBehaviour<CachedQuery, string>(cacheMock.Object);
         var callCount = 0;
@@ -47,7 +47,7 @@ public class AutoCacheBehaviourTests
         Assert.Equal("fresh", result);
         Assert.Equal(1, callCount);
         cacheMock.Verify(c => c.GetOrCreateAsync(
-            It.IsAny<Type[]>(), It.IsAny<object>(), It.IsAny<Func<Task<string>>>(), It.IsAny<CleverCacheEntryOptions>()), Times.Once);
+            It.IsAny<Type[]>(), It.IsAny<object>(), It.IsAny<Func<Task<string>>>(), It.IsAny<CleverCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -56,7 +56,7 @@ public class AutoCacheBehaviourTests
         var cacheMock = new Mock<ICleverCache>();
         cacheMock
             .Setup(c => c.GetOrCreateAsync(
-                It.IsAny<Type[]>(), It.IsAny<object>(), It.IsAny<Func<Task<string>>>(), It.IsAny<CleverCacheEntryOptions>()))
+                It.IsAny<Type[]>(), It.IsAny<object>(), It.IsAny<Func<Task<string>>>(), It.IsAny<CleverCacheEntryOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync("cached-value"); // returns cached directly, never invokes factory
 
         var sut = new AutoCacheBehaviour<CachedQuery, string>(cacheMock.Object);

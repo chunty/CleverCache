@@ -19,7 +19,7 @@ internal class InvalidateCacheBehaviour<TRequest, TResponse>(ICleverCache cache)
 		var result = await next(cancellationToken);
 
 		foreach (var type in attribute.Types)
-			cache.RemoveByType(type);
+			await cache.RemoveByTypeAsync(type, cancellationToken);
 
 		return result;
 	}

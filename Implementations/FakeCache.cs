@@ -15,6 +15,9 @@ public class FakeCache : ICleverCache
 	public void RemoveByType(Type type) { }
 
 	/// <inheritdoc/>
+	public Task RemoveByTypeAsync(Type type, CancellationToken cancellationToken = default) => Task.CompletedTask;
+
+	/// <inheritdoc/>
 	public TItem? GetOrCreate<TItem>(
 		Type[] types,
 		object key,
@@ -26,7 +29,8 @@ public class FakeCache : ICleverCache
 		Type[] types,
 		object key,
 		Func<Task<TItem>> factory,
-		CleverCacheEntryOptions? createOptions = null) => await factory();
+		CleverCacheEntryOptions? createOptions = null,
+		CancellationToken cancellationToken = default) => await factory();
 
 	/// <inheritdoc/>
 	public void Remove(object key) { }

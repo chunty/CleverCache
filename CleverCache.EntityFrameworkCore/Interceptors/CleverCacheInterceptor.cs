@@ -38,8 +38,16 @@ public class CleverCacheInterceptor(ICleverCache cache) : SaveChangesInterceptor
 		int result,
 		CancellationToken cancellationToken = default)
 	{
-		var savedChanges = base.SavedChangesAsync(eventData, result, cancellationToken);
-		InvalidateAndClear(eventData);
+		return InvalidateAndClearAsync(eventData, result, cancellationToken);
+	}
+
+	private async ValueTask<int> InvalidateAndClearAsync(SaveChangesCompletedEventData eventData, int result, CancellationToken cancellationToken)
+	{
+		var savedChanges = await base.SavedChangesAsync(eventData, result, cancellationToken);
+		if (eventData.Context is null) return savedChanges;
+		if (!_pendingTypes.TryRemove(eventData.Context.ContextId, out var types) || types is not { Count: > 0 }) return savedChanges;
+		foreach (var t in types)
+			await cache.RemoveByTypeAsync(t, cancellationToken).ConfigureAwait(false);
 		return savedChanges;
 	}
 

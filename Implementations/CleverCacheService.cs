@@ -30,20 +30,20 @@ internal class CleverCacheService : CacheEntryManager, ICleverCache
 		return value;
 	}
 
-	public async Task<TItem?> GetOrCreateAsync<TItem>(Type[] types, object key, Func<Task<TItem>> factory, CleverCacheEntryOptions? options = null)
+	public async Task<TItem?> GetOrCreateAsync<TItem>(Type[] types, object key, Func<Task<TItem>> factory, CleverCacheEntryOptions? options = null, CancellationToken cancellationToken = default)
 	{
-		var (found, cached) = await _store.TryGetAsync<TItem>(key).ConfigureAwait(false);
+		var (found, cached) = await _store.TryGetAsync<TItem>(key, cancellationToken).ConfigureAwait(false);
 		if (found) return cached;
 
 		using var _ = await _locker.LockAsync(key).ConfigureAwait(false);
 
 		// Double-check: another thread may have populated the cache while we waited for the lock
-		(found, cached) = await _store.TryGetAsync<TItem>(key).ConfigureAwait(false);
+		(found, cached) = await _store.TryGetAsync<TItem>(key, cancellationToken).ConfigureAwait(false);
 		if (found) return cached;
 
 		AddKeyToTypes(types, key);
 		var value = await factory().ConfigureAwait(false);
-		await _store.SetAsync(key, value, options).ConfigureAwait(false);
+		await _store.SetAsync(key, value, options, cancellationToken).ConfigureAwait(false);
 		return value;
 	}
 
@@ -51,6 +51,12 @@ internal class CleverCacheService : CacheEntryManager, ICleverCache
 	{
 		foreach (var k in SnapshotKeysFor(type))
 			_store.Remove(k);
+	}
+
+	public async Task RemoveByTypeAsync(Type type, CancellationToken cancellationToken = default)
+	{
+		foreach (var k in SnapshotKeysFor(type))
+			await _store.RemoveAsync(k, cancellationToken).ConfigureAwait(false);
 	}
 
 	public void Remove(object key) => _store.Remove(key);

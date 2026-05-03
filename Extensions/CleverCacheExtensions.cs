@@ -45,8 +45,9 @@ public static class CleverCacheExtensions
 	/// <returns>The task object representing the asynchronous operation.</returns>
 	public static async Task<TItem?> GetOrCreateAsync<T, TItem>(this ICleverCache cache, object key,
 		Func<Task<TItem>> factory,
-		CleverCacheEntryOptions? createOptions = null) where T : class =>
-		await cache.GetOrCreateAsync(typeof(T), key, factory, createOptions);
+		CleverCacheEntryOptions? createOptions = null,
+		CancellationToken cancellationToken = default) where T : class =>
+		await cache.GetOrCreateAsync(typeof(T), key, factory, createOptions, cancellationToken);
 
 	/// <summary>
 	/// Asynchronously gets the value associated with this key if it exists, or generates a new entry using the provided key and a value from the given factory if the key is not found.
@@ -57,12 +58,14 @@ public static class CleverCacheExtensions
 	/// <param name="key">The key of the entry to look for or create.</param>
 	/// <param name="factory">The factory task that creates the value associated with this key if the key does not exist in the cache.</param>
 	/// <param name="createOptions">The options to be applied to the cache entry if the key does not exist in the cache.</param>
+	/// <param name="cancellationToken">A token to cancel the async operation.</param>
 	/// <returns>The task object representing the asynchronous operation.</returns>
 	public static async Task<TItem?> GetOrCreateAsync<TItem>(this ICleverCache cache, Type type,
 		object key,
 		Func<Task<TItem>> factory,
-		CleverCacheEntryOptions? createOptions = null) =>
-		await cache.GetOrCreateAsync([type], key, factory, createOptions);
+		CleverCacheEntryOptions? createOptions = null,
+		CancellationToken cancellationToken = default) =>
+		await cache.GetOrCreateAsync([type], key, factory, createOptions, cancellationToken);
 
 	/// <summary>
 	/// Returns a human-readable representation of the dependency graph and tracked cache keys.

@@ -23,20 +23,22 @@ public class InvalidateCacheBehaviourTests
 
         await sut.Handle(new NoInvalidationCommand(1), next, CancellationToken.None);
 
-        cacheMock.Verify(c => c.RemoveByType(It.IsAny<Type>()), Times.Never);
+        cacheMock.Verify(c => c.RemoveByTypeAsync(It.IsAny<Type>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task Handle_WithAttribute_InvalidatesAllDeclaredTypes()
     {
         var cacheMock = new Mock<ICleverCache>();
+        cacheMock.Setup(c => c.RemoveByTypeAsync(It.IsAny<Type>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
         var sut = new InvalidateCacheBehaviour<DeleteCommand, bool>(cacheMock.Object);
         RequestHandlerDelegate<bool> next = _ => Task.FromResult(true);
 
         await sut.Handle(new DeleteCommand(1), next, CancellationToken.None);
 
-        cacheMock.Verify(c => c.RemoveByType(typeof(InvalidatedEntity)), Times.Once);
-        cacheMock.Verify(c => c.RemoveByType(typeof(DependentEntity)), Times.Once);
+        cacheMock.Verify(c => c.RemoveByTypeAsync(typeof(InvalidatedEntity), It.IsAny<CancellationToken>()), Times.Once);
+        cacheMock.Verify(c => c.RemoveByTypeAsync(typeof(DependentEntity), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -46,8 +48,9 @@ public class InvalidateCacheBehaviourTests
         var order = new List<string>();
         var sut = new InvalidateCacheBehaviour<DeleteCommand, bool>(cacheMock.Object);
 
-        cacheMock.Setup(c => c.RemoveByType(It.IsAny<Type>()))
-            .Callback<Type>(_ => order.Add("invalidate"));
+        cacheMock.Setup(c => c.RemoveByTypeAsync(It.IsAny<Type>(), It.IsAny<CancellationToken>()))
+            .Callback<Type, CancellationToken>((_, _) => order.Add("invalidate"))
+            .Returns(Task.CompletedTask);
 
         RequestHandlerDelegate<bool> next = _ =>
         {
@@ -64,6 +67,8 @@ public class InvalidateCacheBehaviourTests
     public async Task Handle_WithAttribute_ReturnsHandlerResult()
     {
         var cacheMock = new Mock<ICleverCache>();
+        cacheMock.Setup(c => c.RemoveByTypeAsync(It.IsAny<Type>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
         var sut = new InvalidateCacheBehaviour<DeleteCommand, bool>(cacheMock.Object);
         RequestHandlerDelegate<bool> next = _ => Task.FromResult(true);
 
@@ -82,6 +87,6 @@ public class InvalidateCacheBehaviourTests
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             sut.Handle(new DeleteCommand(1), next, CancellationToken.None));
 
-        cacheMock.Verify(c => c.RemoveByType(It.IsAny<Type>()), Times.Never);
+        cacheMock.Verify(c => c.RemoveByTypeAsync(It.IsAny<Type>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 }

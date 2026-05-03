@@ -31,4 +31,11 @@ public static class CacheEntryManagerExtensions
 	/// <param name="type">The entity type to associate with this cache key.</param>
 	/// <param name="key">The cache key to register.</param>
 	public static void AddKeyToType(this ICleverCache cache, Type type, object key) => cache.AddKeyToTypes([type], key);
+
+	/// <summary>
+	/// Asynchronously removes all cache entries associated with <typeparamref name="T"/>,
+	/// including any dependent types. Prefer over <c>RemoveByType</c> when using a distributed cache backend.
+	/// </summary>
+	public static Task RemoveByTypeAsync<T>(this ICleverCache cache, CancellationToken cancellationToken = default) =>
+		cache.RemoveByTypeAsync(typeof(T), cancellationToken);
 }

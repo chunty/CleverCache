@@ -43,6 +43,14 @@ public class FakeCacheTests
     }
 
     [Fact]
+    public async Task RemoveByTypeAsync_DoesNotThrow()
+    {
+        var fake = new FakeCache();
+        var ex = await Record.ExceptionAsync(() => fake.RemoveByTypeAsync(typeof(string)));
+        Assert.Null(ex);
+    }
+
+    [Fact]
     public void AddKeyToTypes_DoesNotThrow()
     {
         var fake = new FakeCache();

@@ -99,12 +99,14 @@ public class CleverCacheInterceptorTests
     }
 
     [Fact]
-    public async Task SavedChangesAsync_EntityAdded_CallsRemoveByType()
+    public async Task SavedChangesAsync_EntityAdded_CallsRemoveByTypeAsync()
     {
         var (context, mockCache) = CreateContext();
+        mockCache.Setup(c => c.RemoveByTypeAsync(It.IsAny<Type>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
         context.Orders.Add(new IcOrder { Id = 1, Name = "Test" });
         await context.SaveChangesAsync();
 
-        mockCache.Verify(c => c.RemoveByType(typeof(IcOrder)), Times.Once);
+        mockCache.Verify(c => c.RemoveByTypeAsync(typeof(IcOrder), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

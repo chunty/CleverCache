@@ -181,4 +181,23 @@ public class CleverCacheServiceTests
 
         Assert.Contains("no types registered", output);
     }
+
+    [Fact]
+    public async Task RemoveByTypeAsync_RemovesAllKeysForType()
+    {
+        var storeMock = new Mock<ICleverCacheStore>();
+        storeMock.Setup(s => s.TryGet<int>(It.IsAny<object>(), out It.Ref<int>.IsAny)).Returns(false);
+        storeMock.Setup(s => s.TryGetAsync<int>(It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((false, default(int)));
+        storeMock.Setup(s => s.RemoveAsync(It.IsAny<object>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        var sut = new CleverCacheService(storeMock.Object, new CleverCacheOptions());
+
+        sut.GetOrCreate([typeof(string)], "k1", () => 1);
+        sut.GetOrCreate([typeof(string)], "k2", () => 2);
+        await sut.RemoveByTypeAsync(typeof(string));
+
+        storeMock.Verify(s => s.RemoveAsync("k1", It.IsAny<CancellationToken>()), Times.Once);
+        storeMock.Verify(s => s.RemoveAsync("k2", It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

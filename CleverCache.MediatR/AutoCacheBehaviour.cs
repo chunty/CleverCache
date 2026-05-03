@@ -21,7 +21,8 @@ internal class AutoCacheBehaviour<TRequest, TResponse>(ICleverCache cache)
 		var result = await cache.GetOrCreateAsync(
 			attribute.Types,
 			request,
-			() => next(cancellationToken)
+			() => next(cancellationToken),
+			cancellationToken: cancellationToken
 		);
 
 		if (result is not null)

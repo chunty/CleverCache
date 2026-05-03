@@ -55,7 +55,8 @@ public interface ICleverCache
 		Type[] types,
 		object key,
 		Func<Task<TItem>> factory,
-		CleverCacheEntryOptions? createOptions = null);
+		CleverCacheEntryOptions? createOptions = null,
+		CancellationToken cancellationToken = default);
 
 	/// <summary>
 	/// Removes the cache entry with the specified key.
@@ -75,5 +76,14 @@ public interface ICleverCache
 	/// </summary>
 	/// <param name="type">The entity type whose cache entries should be evicted.</param>
 	void RemoveByType(Type type);
+
+	/// <summary>
+	/// Asynchronously removes all cache entries associated with the specified entity type,
+	/// including entries registered under any dependent types (see <see cref="AddDependentCache"/>).
+	/// Prefer this over <see cref="RemoveByType"/> when using a distributed cache backend.
+	/// </summary>
+	/// <param name="type">The entity type whose cache entries should be evicted.</param>
+	/// <param name="cancellationToken">A token to cancel the async operation.</param>
+	Task RemoveByTypeAsync(Type type, CancellationToken cancellationToken = default);
 
 }
