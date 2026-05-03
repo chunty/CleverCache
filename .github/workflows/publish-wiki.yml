@@ -19,3 +19,18 @@ jobs:
           path: wiki/
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update repo About
+        run: |
+          gh repo edit chunty/CleverCache \
+            --description "Automatic cache invalidation for .NET — tracks EF Core changes and evicts cache entries automatically. Supports memory, distributed, Redis, and MediatR." \
+            --homepage "https://github.com/chunty/CleverCache/wiki" \
+            --add-topic dotnet \
+            --add-topic caching \
+            --add-topic efcore \
+            --add-topic csharp \
+            --add-topic nuget \
+            --add-topic mediatr \
+            --add-topic redis
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
