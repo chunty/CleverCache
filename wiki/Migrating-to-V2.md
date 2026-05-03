@@ -62,30 +62,7 @@ builder.Services.AddCleverCacheEntityFramework(o => o.ScanAssemblyContaining<Ord
 
 ### 3. Update `UseCleverCache` → `ScanDbSetsForCacheDependencies`
 
-`app.UseCleverCache<TContext>()` has been replaced with a more descriptive name that lives on `IApplicationBuilder`.
-
-**Before:**
-```csharp
-app.UseCleverCache<AppDbContext>();
-```
-
-**After:**
-```csharp
-app.ScanDbSetsForCacheDependencies<AppDbContext>();
-```
-
-> **Important — `[DependantCaches]` attribute processing:** In V1, `UseCleverCache` silently processed `[DependantCaches]` attributes on EF model types as a side effect. In V2 these are two separate concerns:
->
-> - `ScanDbSetsForCacheDependencies` is **navigation scanning only** — it does not process attributes
-> - `[DependentCaches]` attributes are picked up by `ScanAssemblyContaining` in `AddCleverCacheEntityFramework`
->
-> If you relied on `UseCleverCache` for attribute-based dependency registration, you must add `ScanAssemblyContaining`:
->
-> ```csharp
-> builder.Services.AddCleverCacheEntityFramework(o => o.ScanAssemblyContaining<Order>());
-> ```
-
-Scan options are now passed directly instead of being stored on `CleverCacheOptions`.
+`app.UseCleverCache<TContext>()` has been replaced with a more descriptive name that lives on `IApplicationBuilder`. Scan options are now passed directly instead of being stored on `CleverCacheOptions`.
 
 **Before:**
 ```csharp
@@ -116,9 +93,41 @@ app.ScanDbSetsForCacheDependencies<ReportingDbContext>(o =>
     o.NavigationScanMode = DependentCacheNavigationScanMode.Recursive);
 ```
 
+> **Note:** `ScanDbSetsForCacheDependencies` is navigation scanning only — it no longer processes `[DependentCaches]` attributes. See step 5 below.
+
 ---
 
-### 4. Update `GetOrCreate` / `GetOrCreateAsync` factory signatures
+### 4. Update the `[DependantCaches]` attribute
+
+The attribute class was renamed to fix a spelling mistake. The property `DependantTypes` retains the original spelling for now. The `navigationScanMode` parameter has been removed — navigation scanning is now exclusively handled by `ScanDbSetsForCacheDependencies`.
+
+**Before:**
+```csharp
+[DependantCaches([typeof(OrderLine), typeof(OrderNote)])]
+public class Order { }
+```
+
+**After:**
+```csharp
+[DependentCaches([typeof(OrderLine), typeof(OrderNote)])]
+public class Order { }
+```
+
+---
+
+### 5. Register `[DependentCaches]` attributes at startup
+
+In V1, `UseCleverCache` processed `[DependantCaches]` attributes as a side effect of EF model scanning. In V2 these are separate concerns — `ScanDbSetsForCacheDependencies` handles navigation scanning only. Attributes must now be registered explicitly via `ScanAssemblyContaining`:
+
+```csharp
+builder.Services.AddCleverCacheEntityFramework(o => o.ScanAssemblyContaining<Order>());
+```
+
+You can combine both: use `ScanAssemblyContaining` for explicit attribute-based dependencies and `ScanDbSetsForCacheDependencies` for navigation-driven discovery.
+
+---
+
+### 6. Update `GetOrCreate` / `GetOrCreateAsync` factory signatures
 
 The factory delegate no longer receives an `ICacheEntry`. Cache entry options are now a separate parameter of type `CleverCacheEntryOptions` instead of `MemoryCacheEntryOptions`.
 
@@ -160,36 +169,6 @@ var result = cache.GetOrCreate<int>(
     "order-count",
     () => db.Orders.Count());
 ```
-
----
-
-### 5. Update the `[DependantCaches]` attribute
-
-The attribute class was renamed to fix a spelling mistake. The property `DependantTypes` retains the original spelling for now. The `navigationScanMode` parameter has been removed — navigation scanning is now exclusively handled by `ScanDbSetsForCacheDependencies`.
-
-**Before:**
-```csharp
-[DependantCaches([typeof(OrderLine), typeof(OrderNote)])]
-public class Order { }
-```
-
-**After:**
-```csharp
-[DependentCaches([typeof(OrderLine), typeof(OrderNote)])]
-public class Order { }
-```
-
----
-
-### 6. Register `[DependentCaches]` attributes at startup
-
-In V1, `UseCleverCache` processed `[DependantCaches]` attributes as a side effect of EF model scanning. In V2 these are separate concerns — `ScanDbSetsForCacheDependencies` handles navigation scanning only. Attributes must be registered via `ScanAssemblyContaining`:
-
-```csharp
-builder.Services.AddCleverCacheEntityFramework(o => o.ScanAssemblyContaining<Order>());
-```
-
-You can combine both: use `ScanAssemblyContaining` for explicit attribute-based dependencies and `ScanDbSetsForCacheDependencies` for navigation-driven discovery.
 
 ---
 
