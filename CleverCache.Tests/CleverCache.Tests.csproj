@@ -5,6 +5,7 @@
 		<IsTestProject>true</IsTestProject>
 	</PropertyGroup>
 	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" />
 		<PackageReference Include="Moq" />
 		<PackageReference Include="xunit" />
@@ -16,5 +17,6 @@
 	<ItemGroup>
 		<ProjectReference Include="..\CleverCache.csproj" />
 		<ProjectReference Include="..\CleverCache.MediatR\CleverCache.MediatR.csproj" />
+		<ProjectReference Include="..\CleverCache.EntityFrameworkCore\CleverCache.EntityFrameworkCore.csproj" />
 	</ItemGroup>
 </Project>
