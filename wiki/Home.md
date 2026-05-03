@@ -14,6 +14,7 @@ With a small amount of configuration, CleverCache automatically tracks changes v
 | [Dependent Caches](Dependent-Caches) | `AddKeyToType`, `AddDependentCache`, `[DependentCaches]` attribute |
 | [MediatR Integration](MediatR-Integration) | `[AutoCache]`, `[InvalidatesCache]`, pipeline setup |
 | [Bulk Operations](Bulk-Operations) | Handling `ExecuteDelete`/`ExecuteUpdate` and non-EF writes |
+| [Diagnostics](Diagnostics) | Inspecting the dependency graph and tracked keys at runtime |
 | [Unit Testing](Unit-Testing) | `FakeCache`, mocking `ICleverCache` |
 | [Migrating to V2](Migrating-to-V2) | Breaking changes and before/after examples for V1 → V2 |
 
