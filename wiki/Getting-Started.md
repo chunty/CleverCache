@@ -19,21 +19,27 @@ CleverCache can be used with or without EF Core:
 | Scenario | What you need |
 |---|---|
 | Manual or attribute-driven invalidation | `AddCleverCache` only |
-| Automatic invalidation on `SaveChanges` | `AddCleverCache` + EF Core interceptor |
-| Automatic cascade discovery from navigation properties | `AddCleverCache` + interceptor + `ScanDbSetsForCacheDependencies` |
+| Automatic invalidation on `SaveChanges` | `AddCleverCacheEntityFramework` |
+| Automatic cascade discovery from navigation properties | `AddCleverCacheEntityFramework` + `ScanDbSetsForCacheDependencies` |
 
 > **Without the interceptor** you only get dependency tree management — you can define cascade rules with `[DependentCaches]` or `AddDependentCache`, and call `RemoveByType<T>()` yourself to invalidate. Cache entries are never evicted automatically; you are responsible for triggering invalidation. The interceptor is what makes CleverCache hands-off.
 
 ## 1. Register services
 
+**Without EF Core** (manual or attribute-driven invalidation only):
+
 ```csharp
 builder.Services.AddCleverCache();
+// optionally scan assemblies for [DependentCaches] attributes:
+builder.Services.AddCleverCache(o => o.ScanAssemblyContaining<Order>());
 ```
 
-If you are using `[DependentCaches]` attributes, pass the assemblies to scan during registration. CleverCache will discover and wire up the cascade rules at startup — no EF Core required:
+**With EF Core** — `AddCleverCacheEntityFramework` registers the interceptor and calls `AddCleverCache` internally, so a single call is all you need:
 
 ```csharp
-builder.Services.AddCleverCache(o => o.ScanAssemblyContaining<Order>());
+builder.Services.AddCleverCacheEntityFramework();
+// with CleverCache options:
+builder.Services.AddCleverCacheEntityFramework(o => o.ScanAssemblyContaining<Order>());
 ```
 
 See [Cache Providers](Cache-Providers) for memory, distributed, Redis, and custom provider options.
@@ -42,15 +48,13 @@ See [Cache Providers](Cache-Providers) for memory, distributed, Redis, and custo
 
 The interceptor is what makes CleverCache automatic — cache entries for changed entity types are evicted the moment `SaveChanges` or `SaveChangesAsync` completes. Without it, you can still use CleverCache by calling `RemoveByType<T>()` yourself.
 
-Install the EF Core package and register the interceptor:
+Install the EF Core package:
 
 ```
 dotnet add package CleverCache.EntityFrameworkCore
 ```
 
-```csharp
-builder.Services.AddCleverCacheEntityFramework();
-```
+`AddCleverCacheEntityFramework()` registers both the core services and the interceptor, so you only need one call (see step 1 above).
 
 > **Important:** Automatic invalidation only fires for writes that go through EF Core's change tracker. Writes that bypass it — `ExecuteUpdate`, `ExecuteDelete`, raw SQL, stored procedures, or external services — will **not** trigger invalidation. See [Bulk Operations](Bulk-Operations) for workarounds.
 

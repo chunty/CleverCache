@@ -41,7 +41,7 @@ dotnet add package CleverCache.EntityFrameworkCore
 
 ### 2. Update DI registration
 
-`AddCleverCache()` no longer registers the EF Core interceptor. You must call `AddCleverCacheEntityFramework()` alongside it.
+`AddCleverCache()` no longer registers the EF Core interceptor. Replace both calls with a single `AddCleverCacheEntityFramework()`, which registers the interceptor and calls `AddCleverCache()` internally.
 
 **Before:**
 ```csharp
@@ -50,11 +50,12 @@ builder.Services.AddCleverCache();
 
 **After:**
 ```csharp
-builder.Services.AddCleverCache();
-builder.Services.AddCleverCacheEntityFramework(); // new — registers the SaveChanges interceptor
+builder.Services.AddCleverCacheEntityFramework();
+// with CleverCache options (e.g. assembly scanning):
+builder.Services.AddCleverCacheEntityFramework(o => o.ScanAssemblyContaining<Order>());
 ```
 
-> If you are not using EF Core (manual invalidation only), just keep `AddCleverCache()` and skip `AddCleverCacheEntityFramework()`.
+> If you are not using EF Core (manual invalidation only), keep using `AddCleverCache()` — `AddCleverCacheEntityFramework` is only needed if you have the EF package installed.
 
 ---
 
@@ -86,7 +87,6 @@ app.UseCleverCache<AppDbContext>();
 
 **After:**
 ```csharp
-builder.Services.AddCleverCache();
 builder.Services.AddCleverCacheEntityFramework();
 // ...
 app.ScanDbSetsForCacheDependencies<AppDbContext>(o =>
