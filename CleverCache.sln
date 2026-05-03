@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.12.35527.113
+# Visual Studio Version 18
+VisualStudioVersion = 18.5.11716.220 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleverCache", "CleverCache.csproj", "{2D79F3CA-DFEC-479F-BCA5-06B1935B22F3}"
 EndProject
@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleverCache.Redis", "Clever
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleverCache.Tests", "CleverCache.Tests\CleverCache.Tests.csproj", "{261F2368-C237-4CF0-A4C0-50E650D64412}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleverCache.EntityFrameworkCore", "CleverCache.EntityFrameworkCore\CleverCache.EntityFrameworkCore.csproj", "{55D369A1-A5D2-4F0F-896F-95EBD9BE1241}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleverCache.EntityFrameworkCore", "CleverCache.EntityFrameworkCore\CleverCache.EntityFrameworkCore.csproj", "{96A9C78A-506E-4691-2C0B-35E0C678B967}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -71,18 +71,18 @@ Global
 		{261F2368-C237-4CF0-A4C0-50E650D64412}.Release|x64.Build.0 = Release|Any CPU
 		{261F2368-C237-4CF0-A4C0-50E650D64412}.Release|x86.ActiveCfg = Release|Any CPU
 		{261F2368-C237-4CF0-A4C0-50E650D64412}.Release|x86.Build.0 = Release|Any CPU
-		{55D369A1-A5D2-4F0F-896F-95EBD9BE1241}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{55D369A1-A5D2-4F0F-896F-95EBD9BE1241}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{55D369A1-A5D2-4F0F-896F-95EBD9BE1241}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{55D369A1-A5D2-4F0F-896F-95EBD9BE1241}.Debug|x64.Build.0 = Debug|Any CPU
-		{55D369A1-A5D2-4F0F-896F-95EBD9BE1241}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{55D369A1-A5D2-4F0F-896F-95EBD9BE1241}.Debug|x86.Build.0 = Debug|Any CPU
-		{55D369A1-A5D2-4F0F-896F-95EBD9BE1241}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{55D369A1-A5D2-4F0F-896F-95EBD9BE1241}.Release|Any CPU.Build.0 = Release|Any CPU
-		{55D369A1-A5D2-4F0F-896F-95EBD9BE1241}.Release|x64.ActiveCfg = Release|Any CPU
-		{55D369A1-A5D2-4F0F-896F-95EBD9BE1241}.Release|x64.Build.0 = Release|Any CPU
-		{55D369A1-A5D2-4F0F-896F-95EBD9BE1241}.Release|x86.ActiveCfg = Release|Any CPU
-		{55D369A1-A5D2-4F0F-896F-95EBD9BE1241}.Release|x86.Build.0 = Release|Any CPU
+		{96A9C78A-506E-4691-2C0B-35E0C678B967}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96A9C78A-506E-4691-2C0B-35E0C678B967}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96A9C78A-506E-4691-2C0B-35E0C678B967}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{96A9C78A-506E-4691-2C0B-35E0C678B967}.Debug|x64.Build.0 = Debug|Any CPU
+		{96A9C78A-506E-4691-2C0B-35E0C678B967}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{96A9C78A-506E-4691-2C0B-35E0C678B967}.Debug|x86.Build.0 = Debug|Any CPU
+		{96A9C78A-506E-4691-2C0B-35E0C678B967}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96A9C78A-506E-4691-2C0B-35E0C678B967}.Release|Any CPU.Build.0 = Release|Any CPU
+		{96A9C78A-506E-4691-2C0B-35E0C678B967}.Release|x64.ActiveCfg = Release|Any CPU
+		{96A9C78A-506E-4691-2C0B-35E0C678B967}.Release|x64.Build.0 = Release|Any CPU
+		{96A9C78A-506E-4691-2C0B-35E0C678B967}.Release|x86.ActiveCfg = Release|Any CPU
+		{96A9C78A-506E-4691-2C0B-35E0C678B967}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
