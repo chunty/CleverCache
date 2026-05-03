@@ -54,5 +54,7 @@ internal class CleverCacheService : CacheEntryManager, ICleverCache
 	}
 
 	public void Remove(object key) => _store.Remove(key);
+
+	public CleverCacheDiagnostics GetDiagnostics() => SnapshotDiagnostics();
 }
 

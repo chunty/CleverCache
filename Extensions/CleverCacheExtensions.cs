@@ -63,5 +63,47 @@ public static class CleverCacheExtensions
 		Func<Task<TItem>> factory,
 		CleverCacheEntryOptions? createOptions = null) =>
 		await cache.GetOrCreateAsync([type], key, factory, createOptions);
+
+	/// <summary>
+	/// Returns a human-readable representation of the dependency graph and tracked cache keys.
+	/// Useful for debugging — log it at startup or on-demand via a diagnostic endpoint.
+	/// </summary>
+	/// <example>
+	/// <code>
+	/// logger.LogDebug(cache.RenderDependencyTree());
+	/// </code>
+	/// </example>
+	public static string RenderDependencyTree(this ICleverCache cache)
+	{
+		var d = cache.GetDiagnostics();
+
+		// Collect all types that appear in either cascades or key tracking
+		var allTypes = new HashSet<Type>(d.Dependants.Keys);
+		foreach (var cascades in d.Dependants.Values)
+			foreach (var t in cascades) allTypes.Add(t);
+		foreach (var t in d.KeysByType.Keys) allTypes.Add(t);
+
+		if (allTypes.Count == 0)
+			return "CleverCache: no types registered.";
+
+		var sb = new System.Text.StringBuilder();
+		sb.AppendLine("CleverCache Dependency Tree");
+		sb.AppendLine(new string('─', 40));
+
+		foreach (var type in allTypes.OrderBy(t => t.Name))
+		{
+			sb.AppendLine(type.Name);
+
+			if (d.Dependants.TryGetValue(type, out var cascades) && cascades.Count > 0)
+				sb.AppendLine($"  ↳ cascades to : {string.Join(", ", cascades.Select(t => t.Name))}");
+
+			if (d.KeysByType.TryGetValue(type, out var keys) && keys.Count > 0)
+				sb.AppendLine($"  ↳ tracked keys : {string.Join(", ", keys)}");
+		}
+
+		var totalKeys = d.KeysByType.Values.SelectMany(k => k).Distinct().Count();
+		sb.Append($"─ {allTypes.Count} type(s) | {d.Dependants.Count} cascade rule(s) | {totalKeys} tracked key(s) ─");
+		return sb.ToString();
+	}
 }
 

@@ -64,6 +64,12 @@ public interface ICleverCache
 	void Remove(object key);
 
 	/// <summary>
+	/// Returns a point-in-time snapshot of the dependency graph (cascade rules) and all
+	/// currently tracked cache keys, grouped by entity type. Useful for diagnostics and debugging.
+	/// </summary>
+	CleverCacheDiagnostics GetDiagnostics();
+
+	/// <summary>
 	/// Removes all cache entries associated with the specified entity type, including entries
 	/// registered under any dependent types (see <see cref="AddDependentCache"/>).
 	/// </summary>

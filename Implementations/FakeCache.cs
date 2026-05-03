@@ -30,5 +30,9 @@ public class FakeCache : ICleverCache
 
 	/// <inheritdoc/>
 	public void Remove(object key) { }
+
+	/// <inheritdoc/>
+	public CleverCacheDiagnostics GetDiagnostics() =>
+		new(new Dictionary<Type, IReadOnlyList<Type>>(), new Dictionary<Type, IReadOnlyList<object>>());
 }
 

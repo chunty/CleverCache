@@ -4,6 +4,7 @@ namespace CleverCache.Tests;
 file class TestCacheManager : CacheEntryManager
 {
     public object[] KeysFor(Type type) => SnapshotKeysFor(type);
+    public CleverCacheDiagnostics Diagnostics() => SnapshotDiagnostics();
 }
 
 public class CacheEntryManagerTests
@@ -77,5 +78,22 @@ public class CacheEntryManagerTests
         var mgr = new TestCacheManager();
 
         Assert.Empty(mgr.KeysFor(typeof(double)));
+    }
+
+    [Fact]
+    public void SnapshotDiagnostics_ReflectsDependantsAndKeys()
+    {
+        var mgr = new TestCacheManager();
+        mgr.AddDependentCache(typeof(string), typeof(int));
+        mgr.AddKeyToTypes([typeof(string)], "k1");
+
+        var d = mgr.Diagnostics();
+
+        Assert.True(d.Dependants.ContainsKey(typeof(string)));
+        Assert.Contains(typeof(int), d.Dependants[typeof(string)]);
+        Assert.True(d.KeysByType.ContainsKey(typeof(string)));
+        Assert.Contains("k1", d.KeysByType[typeof(string)]);
+        // int inherits the key via cascade expansion
+        Assert.Contains("k1", d.KeysByType[typeof(int)]);
     }
 }

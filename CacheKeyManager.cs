@@ -38,6 +38,22 @@ internal abstract class CacheEntryManager
 		_keysByType.TryGetValue(type, out var set) ? set.Keys.ToArray() : [];
 
 	/// <summary>
+	/// Snapshot of the full dependency graph and tracked keys.
+	/// </summary>
+	protected CleverCacheDiagnostics SnapshotDiagnostics()
+	{
+		var dependants = _dependants.ToDictionary(
+			kvp => kvp.Key,
+			kvp => (IReadOnlyList<Type>)kvp.Value.Keys.OrderBy(t => t.Name).ToList());
+
+		var keysByType = _keysByType.ToDictionary(
+			kvp => kvp.Key,
+			kvp => (IReadOnlyList<object>)kvp.Value.Keys.ToList());
+
+		return new CleverCacheDiagnostics(dependants, keysByType);
+	}
+
+	/// <summary>
 	/// Transitive closure over dependents, cycle-safe
 	/// </summary>
 	private HashSet<Type> ExpandTransitively(IEnumerable<Type> roots)

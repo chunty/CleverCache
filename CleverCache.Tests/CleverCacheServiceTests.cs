@@ -143,4 +143,42 @@ public class CleverCacheServiceTests
         Assert.Equal(1, callCount);
         Assert.All(results, r => Assert.Equal(42, r));
     }
+
+    [Fact]
+    public void GetDiagnostics_ReturnsCascadesAndKeys()
+    {
+        var sut = CreateService();
+        sut.AddDependentCache(typeof(string), typeof(int));
+        sut.GetOrCreate([typeof(string)], "k1", () => 1);
+
+        var d = sut.GetDiagnostics();
+
+        Assert.Contains(typeof(int), d.Dependants[typeof(string)]);
+        Assert.Contains("k1", d.KeysByType[typeof(string)]);
+    }
+
+    [Fact]
+    public void RenderDependencyTree_ContainsTypeNamesAndKeys()
+    {
+        var sut = CreateService();
+        sut.AddDependentCache(typeof(string), typeof(int));
+        sut.GetOrCreate([typeof(string)], "my-key", () => 1);
+
+        var output = sut.RenderDependencyTree();
+
+        Assert.Contains("String", output);
+        Assert.Contains("Int32", output);
+        Assert.Contains("my-key", output);
+        Assert.Contains("cascades to", output);
+    }
+
+    [Fact]
+    public void RenderDependencyTree_NoTypes_ReturnsEmptyMessage()
+    {
+        var sut = CreateService();
+
+        var output = sut.RenderDependencyTree();
+
+        Assert.Contains("no types registered", output);
+    }
 }
