@@ -37,7 +37,7 @@ public class CleverCacheOptions(HashSet<DependentCache>? dependentCaches = null)
 				var attr = type.GetCustomAttribute<DependentCachesAttribute>();
 				if (attr is null) continue;
 
-				foreach (var depType in attr.DependantTypes)
+				foreach (var depType in attr.DependentTypes)
 				{
 					DependentCaches.Add(new DependentCache(type, depType));
 					if (attr.Reverse)

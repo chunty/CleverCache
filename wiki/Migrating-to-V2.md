@@ -99,7 +99,7 @@ app.ScanDbSetsForCacheDependencies<ReportingDbContext>(o =>
 
 ### 4. Update the `[DependantCaches]` attribute
 
-The attribute class was renamed to fix a spelling mistake. The property `DependantTypes` retains the original spelling for now. The `navigationScanMode` parameter has been removed — navigation scanning is now exclusively handled by `ScanDbSetsForCacheDependencies`.
+The attribute class was renamed to fix a spelling mistake. The `navigationScanMode` parameter has been removed — navigation scanning is now exclusively handled by `ScanDbSetsForCacheDependencies`.
 
 **Before:**
 ```csharp

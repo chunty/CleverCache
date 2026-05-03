@@ -24,7 +24,7 @@ public class DependentCachesAttribute(
 ) : Attribute
 {
 	/// <summary>The entity types that should also be invalidated when this type's entries are evicted.</summary>
-	public Type[] DependantTypes { get; } = types ?? [];
+	public Type[] DependentTypes { get; } = types ?? [];
 
 	/// <summary>When <c>true</c>, also registers the inverse dependency so that invalidating any dependent type also invalidates this type.</summary>
 	public bool Reverse { get; set; } = reverse;
