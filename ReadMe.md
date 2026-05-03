@@ -4,7 +4,7 @@ CleverCache
 [![NuGet](https://img.shields.io/nuget/vpre/clevercache.svg)](https://www.nuget.org/packages/clevercache)
 
 > [!WARNING]
-> **V2 contains breaking changes.** EF Core support has moved to a separate package, the startup API has changed, and `[DependentCaches]` attributes must now be registered explicitly. See the **[V1 → V2 Migration Guide](https://github.com/chunty/CleverCache/wiki/Migrating-to-V2)** before upgrading.
+> **V2 contains breaking changes.** Read the **[V1 → V2 Migration Guide](https://github.com/chunty/CleverCache/wiki/Migrating-to-V2)** before upgrading.
 
 **CleverCache** solves the problem of remembering when to invalidate cache entries when underlying data changes — especially when a cache entry contains data from multiple entity types.
 
