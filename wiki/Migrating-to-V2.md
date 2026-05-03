@@ -73,6 +73,15 @@ app.UseCleverCache<AppDbContext>();
 app.ScanDbSetsForCacheDependencies<AppDbContext>();
 ```
 
+> **Important — `[DependantCaches]` attribute processing:** In V1, `UseCleverCache` silently processed `[DependantCaches]` attributes on EF model types as a side effect. `ScanDbSetsForCacheDependencies` does the same, so a direct swap preserves this behaviour.
+>
+> However, if you are migrating away from `ScanDbSetsForCacheDependencies` entirely (e.g. you only need the interceptor, not navigation scanning), those attributes will no longer be processed. You must add `ScanAssemblyContaining` to preserve them:
+>
+> ```csharp
+> // Interceptor only — must tell CleverCache which assemblies contain [DependentCaches] attributes
+> builder.Services.AddCleverCacheEntityFramework(o => o.ScanAssemblyContaining<Order>());
+> ```
+
 Scan options are now passed directly instead of being stored on `CleverCacheOptions`.
 
 **Before:**
