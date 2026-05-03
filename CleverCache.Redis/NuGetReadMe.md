@@ -2,7 +2,7 @@
 
 Redis integration for [CleverCache](https://www.nuget.org/packages/CleverCache) — adds a `UseRedisCache()` convenience method backed by `StackExchange.Redis`.
 
-For full documentation see the [GitHub repository](https://github.com/chunty/CleverCache).
+For full documentation see the [Cache Providers wiki](https://github.com/chunty/CleverCache/wiki/Cache-Providers).
 
 ## Quick start
 

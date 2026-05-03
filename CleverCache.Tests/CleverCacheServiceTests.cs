@@ -7,7 +7,7 @@ namespace CleverCache.Tests;
 public class CleverCacheServiceTests
 {
     private static CleverCacheService CreateService(ICleverCacheStore? store = null)
-        => new(store ?? new MemoryCacheStore(new MemoryCache(new MemoryCacheOptions())));
+        => new(store ?? new MemoryCacheStore(new MemoryCache(new MemoryCacheOptions())), new CleverCacheOptions());
 
     [Fact]
     public void GetOrCreate_CacheMiss_InvokesFactory()

@@ -8,7 +8,9 @@ public static class ApplicationBuilderExtensions
 	{
 		var cache = app.ApplicationServices.GetRequiredService<ICleverCache>();
 		var smartCacheOptions = app.ApplicationServices.GetRequiredService<CleverCacheOptions>();
-		var dbContext = app.ApplicationServices.GetRequiredService<TContext>();
+
+		using var scope = app.ApplicationServices.CreateScope();
+		var dbContext = scope.ServiceProvider.GetRequiredService<TContext>();
 		var dependentCaches = smartCacheOptions.DependentCaches.ToList();
 
 		dbContext.EnsureCleverCacheInterceptor();

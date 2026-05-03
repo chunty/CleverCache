@@ -2,6 +2,7 @@
 	<PropertyGroup>
 		<PackageId>CleverCache.MediatR</PackageId>
 		<Version>2.0.0</Version>
+		<PackageProjectUrl>https://github.com/chunty/CleverCache/wiki/MediatR-Integration</PackageProjectUrl>
 		<Description>MediatR pipeline integration for CleverCache — automatic caching of MediatR queries via the [AutoCache] attribute.</Description>
 		<PackageTags>MediatR,CleverCache,Cache,Automatic Cache</PackageTags>
 		<PackageReadmeFile>NuGetReadMe.md</PackageReadmeFile>

@@ -2,7 +2,7 @@
 
 MediatR pipeline integration for [CleverCache](https://www.nuget.org/packages/CleverCache) — automatically caches MediatR query results and invalidates cache on commands, with zero changes to your handlers.
 
-For full documentation see the [GitHub repository](https://github.com/chunty/CleverCache).
+For full documentation see the [MediatR Integration wiki](https://github.com/chunty/CleverCache/wiki/MediatR-Integration).
 
 ## Quick start
 

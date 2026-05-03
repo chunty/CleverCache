@@ -1,4 +1,6 @@
-﻿using CleverCache.Implementations;
+﻿using System.Reflection;
+using CleverCache.Attributes;
+using CleverCache.Implementations;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,6 +16,42 @@ public class CleverCacheOptions(CleverCacheScanOptions? scanOptions = null,
 	public CleverCacheScanOptions Scanning { get; set; } = scanOptions ?? new CleverCacheScanOptions();
 	public HashSet<DependentCache> DependentCaches { get; set; } = dependentCaches ?? [];
 	public bool DisableAllScanning { get; set; } = disableAllScanning;
+
+	/// <summary>
+	/// Scans the assembly containing <typeparamref name="T"/> for <see cref="DependentCachesAttribute"/>
+	/// and registers the declared cache dependency relationships.
+	/// Use this instead of relying on <c>UseCleverCache&lt;TContext&gt;()</c> for attribute-based configuration.
+	/// </summary>
+	/// <example>
+	/// <code>
+	/// builder.Services.AddCleverCache(o => o.ScanAssemblyContaining&lt;Order&gt;());
+	/// </code>
+	/// </example>
+	public CleverCacheOptions ScanAssemblyContaining<T>() => ScanAssemblies(typeof(T).Assembly);
+
+	/// <summary>
+	/// Scans the specified assemblies for <see cref="DependentCachesAttribute"/> and registers
+	/// the declared cache dependency relationships.
+	/// </summary>
+	public CleverCacheOptions ScanAssemblies(params Assembly[] assemblies)
+	{
+		foreach (var assembly in assemblies)
+		{
+			foreach (var type in assembly.GetTypes())
+			{
+				var attr = type.GetCustomAttribute<DependentCachesAttribute>();
+				if (attr is null) continue;
+
+				foreach (var depType in attr.DependantTypes)
+				{
+					DependentCaches.Add(new DependentCache(type, depType));
+					if (attr.Reverse)
+						DependentCaches.Add(new DependentCache(depType, type));
+				}
+			}
+		}
+		return this;
+	}
 
 	internal Action<IServiceCollection> StoreRegistration { get; private set; } = services =>
 	{

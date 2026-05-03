@@ -4,7 +4,7 @@ Automatic cache invalidation for .NET — tracks entity changes via EF Core and 
 
 Supports **memory cache** (default), **distributed cache** (`IDistributedCache`), or a **custom provider**.
 
-For full documentation, examples, and configuration options see the [GitHub repository](https://github.com/chunty/CleverCache).
+For full documentation, examples, and configuration options see the [CleverCache wiki](https://github.com/chunty/CleverCache/wiki).
 
 ## Quick start
 
