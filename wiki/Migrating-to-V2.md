@@ -11,6 +11,7 @@ V2 is a significant refactor. The core caching API is mostly the same but severa
 | EF Core dependency | Bundled in `CleverCache` | Separate `CleverCache.EntityFrameworkCore` package |
 | Startup (interceptor) | `AddCleverCache()` registered interceptor | `AddCleverCacheEntityFramework()` required |
 | Startup (scanning) | `app.UseCleverCache<TContext>()` | `app.ScanDbSetsForCacheDependencies<TContext>()` |
+| Attribute discovery | `UseCleverCache` picked up `[DependantCaches]` automatically | Must call `ScanAssemblyContaining<T>()` explicitly in `AddCleverCacheEntityFramework` |
 | Scan options | `CleverCacheOptions.Scanning` | Passed directly to `ScanDbSetsForCacheDependencies` |
 | `GetOrCreate` factory | `Func<ICacheEntry, TItem>` | `Func<TItem>` |
 | `GetOrCreateAsync` factory | `Func<ICacheEntry, Task<TItem>>` | `Func<Task<TItem>>` |
