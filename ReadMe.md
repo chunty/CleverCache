@@ -229,6 +229,18 @@ public record MyQuery : IRequest;
 This uses the mediatr request as the cache key so you can use the same query with different parameters 
 and it will cache each one separately.
 
+### Auto-invalidating on MediatR commands
+
+Add `[InvalidatesCache]` to any command to automatically clear the specified cache types after the
+command handler completes successfully:
+
+```csharp
+[InvalidatesCache(typeof(Order), typeof(OrderLine))]
+public record DeleteOrderCommand(int OrderId) : IRequest;
+```
+
+Cache is only cleared if the handler completes without throwing — a failed command leaves the cache untouched.
+
 ## Redis cache
 
 Install the dedicated **[CleverCache.Redis](https://www.nuget.org/packages/clevercache.redis)** package to add Redis support without bringing the StackExchange.Redis dependency into your main project.
@@ -317,6 +329,51 @@ builder.Services.AddCleverCache(o => o.UseCustomStore<DictionaryCacheStore>());
 // or via a factory:
 builder.Services.AddCleverCache(o => o.UseCustomStore(sp => new DictionaryCacheStore()));
 ```
+
+## Bulk operations and non-EF writes
+
+EF Core's `ExecuteDelete` and `ExecuteUpdate` (and any other writes that bypass the change tracker —
+stored procedures, raw SQL, external services) do **not** trigger the `SaveChangesInterceptor`, so
+CleverCache won't automatically invalidate affected entries. Two workarounds are available:
+
+### Option 1 — Fluent `.InvalidateCaches()` (any project)
+
+Chain `.InvalidateCaches()` after any operation that returns `int` (rows affected):
+
+```csharp
+// Sync
+context.Orders.Where(o => o.IsDeleted)
+    .ExecuteDelete()
+    .InvalidateCaches(cache, typeof(Order));
+
+// Async
+await context.Orders.Where(o => o.IsDeleted)
+    .ExecuteDeleteAsync()
+    .InvalidateCaches(cache, typeof(Order));
+
+// Generic shorthand — no typeof needed
+await context.Orders.Where(o => o.IsDeleted)
+    .ExecuteDeleteAsync()
+    .InvalidateCaches<Order>(cache);
+
+// Works after ExecuteUpdate too
+await context.Orders.Where(o => o.Status == "pending")
+    .ExecuteUpdateAsync(s => s.SetProperty(o => o.Status, "complete"))
+    .InvalidateCaches<Order>(cache);
+```
+
+The call passes through the row count so existing code that uses the return value still compiles.
+
+### Option 2 — `[InvalidatesCache]` on MediatR commands (CleverCache.MediatR)
+
+If you're using CQRS with MediatR, decorate the command instead — no manual cache calls needed:
+
+```csharp
+[InvalidatesCache(typeof(Order), typeof(OrderLine))]
+public record DeleteOrderCommand(int OrderId) : IRequest;
+```
+
+See the [MediatR section ↑](#auto-caching-mediatr-queries) for setup.
 
 ## Unit testing
 Unit testing methods that use cache is generally fiddly. To help with this, **CleverCache** ships with a
