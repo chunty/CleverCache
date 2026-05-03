@@ -1,6 +1,6 @@
 # Dependent Caches
 
-CleverCache tracks which entity types a cache entry is associated with and evicts it automatically when those types change. This page covers four scenarios, from the simplest to the most automatic.
+CleverCache tracks which entity types a cache entry is associated with and evicts it automatically when those types change. This page covers the scenarios for configuring cache dependency relationships.
 
 ---
 
@@ -40,11 +40,11 @@ Register the assembly containing your entities when configuring CleverCache — 
 
 ```csharp
 builder.Services.AddCleverCache(o => o.ScanAssemblyContaining<Order>());
+// or, when using EF Core:
+builder.Services.AddCleverCacheEntityFramework(o => o.ScanAssemblyContaining<Order>());
 ```
 
 CleverCache scans the assembly at startup and registers the cascade rules. Now `cache.RemoveByType<Order>()` also clears all `OrderLine` and `OrderNote` entries automatically.
-
-If you are already using `UseCleverCache<AppDbContext>()` for navigation scanning, attribute-based cascades on those same entities are also picked up there — so you don't need `ScanAssemblyContaining` as well.
 
 **Programmatically** (for dynamic or test scenarios):
 
@@ -67,60 +67,32 @@ public class Order { }
 
 ---
 
-## Scenario 3 — Auto-discover cascades for a specific entity
+## Scenario 3 — Auto-wire the whole context via navigation scanning
 
-Instead of listing dependent types by hand, CleverCache can read the EF Core navigation properties on a specific entity and register cascades for you:
+If you want cascade rules discovered automatically from your EF Core model without decorating any classes, call `ScanDbSetsForCacheDependencies` after building your app. This inspects every entity type in the context's model and registers cascades based on navigation properties:
 
 ```csharp
-[DependentCaches([], navigationScanMode: DependentCacheNavigationScanMode.Direct)]
-public class Order
+app.ScanDbSetsForCacheDependencies<AppDbContext>();
+
+// Control the depth of scanning:
+app.ScanDbSetsForCacheDependencies<AppDbContext>(o =>
+    o.NavigationScanMode = DependentCacheNavigationScanMode.Direct);
+
+// Also register reverse cascades (when OrderLine changes, also clear Order):
+app.ScanDbSetsForCacheDependencies<AppDbContext>(o =>
 {
-    public Customer Customer { get; set; }            // → cascade added
-    public ICollection<OrderLine> Lines { get; set; } // → cascade added
-}
+    o.NavigationScanMode = DependentCacheNavigationScanMode.Recursive;
+    o.ReverseNavigationDependencies = true;
+});
 ```
 
 | Mode | Behaviour |
 |---|---|
-| `None` (default) | No navigation scanning — use explicit `types` list only |
-| `Direct` | Scans the immediate navigation properties of this entity |
-| `Recursive` | Scans the full navigation graph transitively from this entity |
-
-This is useful when you want opt-in, per-entity control — only the entities you decorate are scanned.
-
----
-
-## Scenario 4 — Auto-wire the whole context with no attributes
-
-If you want every entity in your context wired up automatically without decorating any classes, enable global navigation scanning in `UseCleverCache`:
-
-```csharp
-app.UseCleverCache<AppDbContext>(o =>
-    o.Scanning.NavigationScanMode = DependentCacheNavigationScanMode.Direct);
-```
-
-CleverCache scans the navigation properties on every `DbSet<T>` type in `AppDbContext` and registers the cascades at startup. No `[DependentCaches]` attributes needed anywhere.
-
-```csharp
-// Also register reverse cascades (when OrderLine changes, also clear Order)
-app.UseCleverCache<AppDbContext>(o =>
-{
-    o.Scanning.NavigationScanMode = DependentCacheNavigationScanMode.Recursive;
-    o.Scanning.ReverseNavigationDependencies = true;
-});
-```
+| `Direct` (default) | Scans the immediate navigation properties of each entity |
+| `Recursive` | Scans the full navigation graph transitively from each entity |
+| `None` | No scanning — returns nothing |
 
 > **⚠️ Consider carefully before using this in large projects.** Global navigation scanning wires up every entity in your context. In a large schema this can create a very wide dependency tree — a change to a central entity like `Customer` or `User` may cascade to dozens of cache keys, leading to excessive invalidation and high memory usage from tracking all those key associations. For most projects, Scenario 2 (`[DependentCaches]` attributes with `ScanAssemblyContaining`) gives you the same convenience with precise, opt-in control over which relationships matter.
 
----
-
-## How Scenario 3 and 4 interact
-
-| Global mode | Attribute behaviour |
-|---|---|
-| `None` (default) | Attributes are processed normally — Scenarios 2 & 3 work as described |
-| `Direct` | Global scanning runs first; attributes are **also** processed for any additional explicit types or `reverse` flags |
-| `Recursive` | Attribute processing is **skipped entirely** — the full graph is already discovered globally, making per-entity attributes redundant |
-
-> If you use global `Recursive` scanning, `[DependentCaches]` attributes on your entities are ignored. Choose either global scanning or per-entity attributes — don't mix `Recursive` with attribute-based configuration.
+> **Navigation scanning and attributes are independent.** `ScanDbSetsForCacheDependencies` discovers relationships purely from EF navigation properties. `[DependentCaches]` attributes are registered separately via `ScanAssemblyContaining`. Use both together for full coverage.
 

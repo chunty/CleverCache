@@ -1,7 +1,7 @@
 ﻿namespace CleverCache.EntityFrameworkCore.Models;
 
 public class CleverCacheScanOptions(
-	DependentCacheNavigationScanMode navigationScanMode = DependentCacheNavigationScanMode.None,
+	DependentCacheNavigationScanMode navigationScanMode = DependentCacheNavigationScanMode.Direct,
 	bool reverseNavigationDependencies = false
 )
 {
