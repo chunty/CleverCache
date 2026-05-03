@@ -12,9 +12,13 @@ With a small amount of configuration **CleverCache** will automatically track ch
 and reset the cache for any entity if an entity of that type is create, updated or deleted, and - if required, 
 any related entity where data is also part of the same cache entry.
 
-> 🚀 **MediatR users:** Install [`CleverCache.MediatR`](https://www.nuget.org/packages/clevercache.mediatr)
-> for **automatic query caching with zero changes to your handlers** — just add `[AutoCache]` to your
-> query class and CleverCache handles the rest, including automatic invalidation when your data changes.
+## 🚀 MediatR users
+
+Install [`CleverCache.MediatR`](https://www.nuget.org/packages/clevercache.mediatr)
+for **automatic query caching with zero changes to your handlers** — just add `[AutoCache]` to your
+query class and CleverCache handles the rest, including automatic invalidation when your data changes.
+
+[Jump to MediatR docs ↓](#auto-caching-mediatr-queries)
 
 > **Automatic invalidation requires Entity Framework Core.** CleverCache hooks into EF Core as a
 > `SaveChangesInterceptor` — cache entries are cleared automatically when `SaveChanges` or
