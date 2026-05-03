@@ -1,0 +1,34 @@
+name: Update Repo About
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract description and tags from csproj
+        id: meta
+        run: |
+          DESCRIPTION=$(grep -oPm1 '(?<=<Description>)[^<]+' CleverCache.csproj)
+          TAGS=$(grep -oPm1 '(?<=<PackageTags>)[^<]+' CleverCache.csproj)
+
+          # Convert comma-separated tags to --add-topic arguments
+          TOPIC_ARGS=$(echo "$TAGS" | tr ',' '\n' | sed 's/ //g' | tr '[:upper:]' '[:lower:]' | sed 's/^/--add-topic /' | tr '\n' ' ')
+
+          echo "description=$DESCRIPTION" >> $GITHUB_OUTPUT
+          echo "topic_args=$TOPIC_ARGS" >> $GITHUB_OUTPUT
+
+      - name: Update GitHub repo About
+        run: |
+          gh repo edit ${{ github.repository }} \
+            --description "${{ steps.meta.outputs.description }}" \
+            --homepage "https://github.com/${{ github.repository }}/wiki" \
+            ${{ steps.meta.outputs.topic_args }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
