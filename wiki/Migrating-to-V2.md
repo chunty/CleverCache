@@ -18,6 +18,7 @@ V2 is a significant refactor. The core caching API is mostly the same but severa
 | Cache entry options type | `MemoryCacheEntryOptions` | `CleverCacheEntryOptions` |
 | Dependent cache attribute | `[DependantCaches]` | `[DependentCaches]` |
 | `FakeCache` namespace | `CleverCache.Implementations` | `CleverCache` |
+| `DependentCacheNavigationScanMode` namespace | `CleverCache.Models` | `CleverCache.EntityFrameworkCore.Models` |
 
 ---
 
