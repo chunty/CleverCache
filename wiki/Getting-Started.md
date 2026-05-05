@@ -85,7 +85,9 @@ public class AppDbContext(CleverCacheInterceptor cleverCacheInterceptor) : DbCon
 
 ## 3. Scan DbSet navigation properties (optional)
 
-Only needed if you want CleverCache to auto-discover cascade rules from EF Core navigation properties. This can be called multiple times for multiple DbContext types, each with their own scan options:
+Only needed if you want CleverCache to auto-discover cascade rules from EF Core navigation properties. This can be called multiple times for multiple DbContext types, each with their own scan options.
+
+**ASP.NET Core apps** — call on `IApplicationBuilder`:
 
 ```csharp
 app.ScanDbSetsForCacheDependencies<AppDbContext>();
@@ -98,6 +100,18 @@ app.ScanDbSetsForCacheDependencies<AppDbContext>(o =>
 app.ScanDbSetsForCacheDependencies<OrderDbContext>(o =>
     o.NavigationScanMode = DependentCacheNavigationScanMode.Direct);
 app.ScanDbSetsForCacheDependencies<CatalogDbContext>();
+```
+
+**Worker services and console apps** — `IApplicationBuilder` isn't available, call on `IServiceProvider` instead:
+
+```csharp
+var host = Host.CreateDefaultBuilder(args)
+    .ConfigureServices(services => services.AddCleverCacheEntityFramework())
+    .Build();
+
+host.Services.ScanDbSetsForCacheDependencies<AppDbContext>();
+
+await host.RunAsync();
 ```
 
 See [Dependent Caches](Dependent-Caches) for full details on navigation scanning modes.
