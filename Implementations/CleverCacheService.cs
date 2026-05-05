@@ -50,16 +50,26 @@ internal class CleverCacheService : CacheEntryManager, ICleverCache
 	public void RemoveByType(Type type)
 	{
 		foreach (var k in SnapshotKeysFor(type))
+		{
 			_store.Remove(k);
+			RemoveKeyFromAllTypes(k);
+		}
 	}
 
 	public async Task RemoveByTypeAsync(Type type, CancellationToken cancellationToken = default)
 	{
 		foreach (var k in SnapshotKeysFor(type))
+		{
 			await _store.RemoveAsync(k, cancellationToken).ConfigureAwait(false);
+			RemoveKeyFromAllTypes(k);
+		}
 	}
 
-	public void Remove(object key) => _store.Remove(key);
+	public void Remove(object key)
+	{
+		_store.Remove(key);
+		RemoveKeyFromAllTypes(key);
+	}
 
 	public CleverCacheDiagnostics GetDiagnostics() => SnapshotDiagnostics();
 }

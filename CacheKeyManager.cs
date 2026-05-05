@@ -32,6 +32,16 @@ internal abstract class CacheEntryManager
 	}
 
 	/// <summary>
+	/// Removes a key from every type's tracked key set.
+	/// Called after a key is removed from the store so the tracking set stays in sync.
+	/// </summary>
+	protected void RemoveKeyFromAllTypes(object key)
+	{
+		foreach (var typeSet in _keysByType.Values)
+			typeSet.TryRemove(key, out _);
+	}
+
+	/// <summary>
 	/// Snapshot keys for a given type (safe to enumerate).
 	/// </summary>
 	protected object[] SnapshotKeysFor(Type type) =>

@@ -200,4 +200,32 @@ public class CleverCacheServiceTests
         storeMock.Verify(s => s.RemoveAsync("k1", It.IsAny<CancellationToken>()), Times.Once);
         storeMock.Verify(s => s.RemoveAsync("k2", It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    [Fact]
+    public void Remove_CleansUpKeyFromAllTypeSets()
+    {
+        var sut = CreateService();
+        sut.AddDependentCache(typeof(string), typeof(int));
+        sut.GetOrCreate([typeof(string)], "k1", () => 1); // k1 added to String and Int32
+
+        sut.Remove("k1");
+
+        var d = sut.GetDiagnostics();
+        Assert.DoesNotContain("k1", d.KeysByType.GetValueOrDefault(typeof(string)) ?? []);
+        Assert.DoesNotContain("k1", d.KeysByType.GetValueOrDefault(typeof(int)) ?? []);
+    }
+
+    [Fact]
+    public void RemoveByType_CleansUpKeysFromAllTypeSets()
+    {
+        var sut = CreateService();
+        sut.AddDependentCache(typeof(string), typeof(int));
+        sut.GetOrCreate([typeof(string)], "k1", () => 1); // k1 added to String and Int32 transitively
+
+        sut.RemoveByType(typeof(string));
+
+        var d = sut.GetDiagnostics();
+        Assert.DoesNotContain("k1", d.KeysByType.GetValueOrDefault(typeof(string)) ?? []);
+        Assert.DoesNotContain("k1", d.KeysByType.GetValueOrDefault(typeof(int)) ?? []); // must also clean up dependent type
+    }
 }
