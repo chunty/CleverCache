@@ -13,6 +13,9 @@ internal class CleverCacheService : CacheEntryManager, ICleverCache
 		_store = store;
 		foreach (var dep in options.DependentCaches)
 			AddDependentCache(dep.Type, dep.DependentType);
+
+		if (store is IEvictionNotifyingStore evicting)
+			evicting.RegisterEvictionCallback(RemoveKeyFromAllTypes);
 	}
 
 	public TItem? GetOrCreate<TItem>(Type[] types, object key, Func<TItem> factory, CleverCacheEntryOptions? options = null)

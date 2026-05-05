@@ -228,4 +228,18 @@ public class CleverCacheServiceTests
         Assert.DoesNotContain("k1", d.KeysByType.GetValueOrDefault(typeof(string)) ?? []);
         Assert.DoesNotContain("k1", d.KeysByType.GetValueOrDefault(typeof(int)) ?? []); // must also clean up dependent type
     }
+
+    [Fact]
+    public void Eviction_WhenStoreSupportsNotification_CleansUpKeyFromTypeSets()
+    {
+        // MemoryCacheStore implements IEvictionNotifyingStore — eviction should clean up _keysByType
+        var sut = CreateService();
+        sut.GetOrCreate([typeof(string)], "k1", () => 1);
+
+        Assert.Contains("k1", sut.GetDiagnostics().KeysByType[typeof(string)]);
+
+        sut.Remove("k1"); // triggers store eviction → PostEvictionCallback → RemoveKeyFromAllTypes
+
+        Assert.DoesNotContain("k1", sut.GetDiagnostics().KeysByType.GetValueOrDefault(typeof(string)) ?? []);
+    }
 }

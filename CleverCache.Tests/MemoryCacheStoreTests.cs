@@ -79,4 +79,18 @@ public class MemoryCacheStoreTests
         Assert.True(store.TryGet<int>("key1", out var val));
         Assert.Equal(99, val);
     }
+
+    [Fact]
+    public void RegisterEvictionCallback_CalledWhenEntryEvicted()
+    {
+        var store = CreateStore();
+        var tcs = new TaskCompletionSource<object?>();
+        store.RegisterEvictionCallback(k => tcs.TrySetResult(k));
+
+        store.Set("key1", 42);
+        store.Remove("key1"); // triggers PostEvictionCallback (async)
+
+        Assert.True(tcs.Task.Wait(TimeSpan.FromSeconds(2)), "eviction callback was not fired");
+        Assert.Equal("key1", tcs.Task.Result);
+    }
 }

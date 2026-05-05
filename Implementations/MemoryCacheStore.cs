@@ -2,8 +2,12 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace CleverCache.Implementations;
 
-public class MemoryCacheStore(IMemoryCache memoryCache) : ICleverCacheStore
+public class MemoryCacheStore(IMemoryCache memoryCache) : ICleverCacheStore, IEvictionNotifyingStore
 {
+	private Action<object>? _onEvicted;
+
+	public void RegisterEvictionCallback(Action<object> onEvicted) => _onEvicted = onEvicted;
+
 	public bool TryGet<TItem>(object key, out TItem? value)
 	{
 		if (memoryCache.TryGetValue(key, out var hit))
@@ -26,6 +30,9 @@ public class MemoryCacheStore(IMemoryCache memoryCache) : ICleverCacheStore
 	{
 		using var entry = memoryCache.CreateEntry(key);
 		entry.Value = value;
+
+		if (_onEvicted is not null)
+			entry.RegisterPostEvictionCallback((k, _, _, _) => _onEvicted(k));
 
 		if (options is null) return;
 		entry.AbsoluteExpiration = options.AbsoluteExpiration;
