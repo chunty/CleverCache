@@ -25,12 +25,9 @@ internal class AutoCacheBehaviour<TRequest, TResponse>(ICleverCache cache)
 			cancellationToken: cancellationToken
 		);
 
-		if (result is not null)
-		{
-			return result;
-		}
-
-		cache.Remove(request);
-		return await next(cancellationToken);
+		// GetOrCreateAsync returns TResponse? to satisfy nullability constraints on the cache store,
+		// but the handler is responsible for its own return value — if it legitimately returns null,
+		// propagate that rather than re-executing the handler.
+		return result ?? default!;
 	}
 }
