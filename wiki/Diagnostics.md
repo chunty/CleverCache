@@ -53,4 +53,9 @@ OrderNote
 ─ 4 type(s) | 2 cascade rule(s) | 4 tracked key(s) ─
 ```
 
-> **Note:** `KeysByType` reflects the keys registered since the application started. Keys are removed from the underlying cache store when invalidated, but the type→key association in CleverCache persists until the process restarts. An entry appearing in `tracked keys` does not necessarily mean it is still present in the cache — only that it was registered at some point.
+> **Note:** `KeysByType` reflects the keys currently tracked by CleverCache. Keys are removed from the tracking set when:
+> - `Remove(key)` is called explicitly
+> - `RemoveByType(type)` is called (e.g. via the EF Core interceptor on `SaveChanges`)
+> - The entry is evicted from the underlying store and the store implements `IEvictionNotifyingStore` (e.g. `MemoryCacheStore`)
+>
+> For distributed cache stores that don't support eviction notifications, keys may remain visible in `KeysByType` after their TTL expires in the remote store. This does not affect correctness — stale keys are simply no-ops when invalidation fires.

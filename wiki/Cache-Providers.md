@@ -78,6 +78,31 @@ builder.Services.AddCleverCache(o => o.UseCustomStore<MyStore>());
 builder.Services.AddCleverCache(o => o.UseCustomStore(sp => new MyStore(sp.GetRequiredService<IFoo>())));
 ```
 
+### Eviction notifications (optional)
+
+CleverCache tracks which keys belong to which types in memory. To keep this tracking accurate when entries expire via TTL, your store can implement `IEvictionNotifyingStore` alongside `ICleverCacheStore`:
+
+```csharp
+public class MyStore : ICleverCacheStore, IEvictionNotifyingStore
+{
+    private Action<object>? _onEvicted;
+
+    public void RegisterEvictionCallback(Action<object> onEvicted) => _onEvicted = onEvicted;
+
+    public void Set<TItem>(object key, TItem value, CleverCacheEntryOptions? options = null)
+    {
+        // ... store the value ...
+        // Call _onEvicted(key) whenever this entry is evicted or expires
+    }
+
+    // ... rest of ICleverCacheStore implementation
+}
+```
+
+When `CleverCacheService` detects that your store implements `IEvictionNotifyingStore` at startup, it registers itself as the eviction listener automatically — no additional configuration needed.
+
+If your backing store has no eviction notification API (as is the case with `IDistributedCache`), simply omit `IEvictionNotifyingStore`. Tracked keys are still cleaned up on explicit `Remove`/`RemoveByType` calls; only naturally-expired entries may linger briefly in the in-memory tracking set.
+
 ### Example — dictionary-backed store
 
 ```csharp
