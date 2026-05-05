@@ -16,6 +16,10 @@ internal class DbExtA { public int Id { get; set; } public DbExtB? B { get; set;
 internal class DbExtB { public int Id { get; set; } public DbExtC? C { get; set; } }
 internal class DbExtC { public int Id { get; set; } }
 
+// Circular model: P ↔ Q (bidirectional) — DbExtQ is the dependent (has FK)
+internal class DbExtP { public int Id { get; set; } public DbExtQ? Q { get; set; } }
+internal class DbExtQ { public int Id { get; set; } public int DbExtPId { get; set; } public DbExtP? P { get; set; } }
+
 internal class ScanTestDbContext(DbContextOptions<ScanTestDbContext> options) : DbContext(options)
 {
     public DbSet<DbExtOrder> Orders => Set<DbExtOrder>();
@@ -23,6 +27,8 @@ internal class ScanTestDbContext(DbContextOptions<ScanTestDbContext> options) : 
     public DbSet<DbExtA> As => Set<DbExtA>();
     public DbSet<DbExtB> Bs => Set<DbExtB>();
     public DbSet<DbExtC> Cs => Set<DbExtC>();
+    public DbSet<DbExtP> Ps => Set<DbExtP>();
+    public DbSet<DbExtQ> Qs => Set<DbExtQ>();
 }
 
 public class DbContextExtensionsTests
@@ -76,6 +82,26 @@ public class DbContextExtensionsTests
 
         Assert.Contains(result, d => d.Type == typeof(DbExtA) && d.DependentType == typeof(DbExtB));
         Assert.Contains(result, d => d.Type == typeof(DbExtB) && d.DependentType == typeof(DbExtC));
+    }
+
+    [Fact]
+    public void DiscoverDependentCaches_BidirectionalNavigation_RegistersBothDirections()
+    {
+        using var context = CreateContext();
+        var result = context.DiscoverDependentCaches(new CleverCacheScanOptions(DependentCacheNavigationScanMode.Direct));
+
+        Assert.Contains(result, d => d.Type == typeof(DbExtOrder) && d.DependentType == typeof(DbExtOrderLine));
+        Assert.Contains(result, d => d.Type == typeof(DbExtOrderLine) && d.DependentType == typeof(DbExtOrder));
+    }
+
+    [Fact]
+    public void DiscoverDependentCaches_CircularNavigation_DoesNotStackOverflow()
+    {
+        using var context = CreateContext();
+        var result = context.DiscoverDependentCaches(new CleverCacheScanOptions(DependentCacheNavigationScanMode.Recursive));
+
+        Assert.Contains(result, d => d.Type == typeof(DbExtP) && d.DependentType == typeof(DbExtQ));
+        Assert.Contains(result, d => d.Type == typeof(DbExtQ) && d.DependentType == typeof(DbExtP));
     }
 }
 
