@@ -6,8 +6,8 @@
     <Authors>Chris Hunt</Authors>
     <Company>TappetyClick</Company>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <RepositoryUrl>https://github.com/chunty/CleverCache</RepositoryUrl>
+    <RepositoryUrl>https://github.com/chunty/Simpository</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageProjectUrl>https://github.com/chunty/CleverCache</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/chunty/Simpository</PackageProjectUrl>
   </PropertyGroup>
 </Project>
