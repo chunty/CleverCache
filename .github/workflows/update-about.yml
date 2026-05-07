@@ -7,28 +7,38 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - uses: actions/checkout@v4
 
-      - name: Extract description and tags from csproj
+      - name: Extract metadata from csproj
         id: meta
         run: |
           DESCRIPTION=$(grep -oPm1 '(?<=<Description>)[^<]+' CleverCache.csproj)
           TAGS=$(grep -oPm1 '(?<=<PackageTags>)[^<]+' CleverCache.csproj)
 
-          # Convert comma-separated tags to --add-topic arguments
-          TOPIC_ARGS=$(echo "$TAGS" | tr ',' '\n' | sed 's/ //g' | tr '[:upper:]' '[:lower:]' | sed 's/^/--add-topic /' | tr '\n' ' ')
-
           echo "description=$DESCRIPTION" >> $GITHUB_OUTPUT
-          echo "topic_args=$TOPIC_ARGS" >> $GITHUB_OUTPUT
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
 
-      - name: Update GitHub repo About
+      - name: Update description and homepage
         run: |
-          gh repo edit ${{ github.repository }} \
+          gh repo edit "$GITHUB_REPOSITORY" \
             --description "${{ steps.meta.outputs.description }}" \
-            --homepage "https://github.com/${{ github.repository }}/wiki" \
-            ${{ steps.meta.outputs.topic_args }}
+            --homepage "https://github.com/$GITHUB_REPOSITORY/wiki"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+
+      - name: Replace topics from PackageTags
+        run: |
+          # Convert comma-separated tags to a JSON array of lowercase, hyphenated topics
+          TOPICS_JSON=$(echo "${{ steps.meta.outputs.tags }}" \
+            | tr ',' '\n' \
+            | sed 's/^ *//;s/ *$//' \
+            | tr '[:upper:]' '[:lower:]' \
+            | tr ' ' '-' \
+            | jq -R . \
+            | jq -sc '{names: .}')
+
+          echo "Topics: $TOPICS_JSON"
+          echo "$TOPICS_JSON" | gh api --method PUT "/repos/$GITHUB_REPOSITORY/topics" --input -
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
