@@ -20,8 +20,8 @@ public class FakeCacheTests
         var fake = new FakeCache();
         var callCount = 0;
 
-        await fake.GetOrCreateAsync([typeof(string)], "key", async () => { callCount++; await Task.Yield(); return 1; });
-        await fake.GetOrCreateAsync([typeof(string)], "key", async () => { callCount++; await Task.Yield(); return 2; });
+        await fake.GetOrCreateAsync([typeof(string)], "key", async () => { callCount++; await Task.Yield(); return 1; }, cancellationToken: TestContext.Current.CancellationToken);
+        await fake.GetOrCreateAsync([typeof(string)], "key", async () => { callCount++; await Task.Yield(); return 2; }, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(2, callCount);
     }
@@ -46,7 +46,7 @@ public class FakeCacheTests
     public async Task RemoveByTypeAsync_DoesNotThrow()
     {
         var fake = new FakeCache();
-        var ex = await Record.ExceptionAsync(() => fake.RemoveByTypeAsync(typeof(string)));
+        var ex = await Record.ExceptionAsync(() => fake.RemoveByTypeAsync(typeof(string), TestContext.Current.CancellationToken));
         Assert.Null(ex);
     }
 

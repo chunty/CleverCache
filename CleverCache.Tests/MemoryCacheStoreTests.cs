@@ -47,7 +47,7 @@ public class MemoryCacheStoreTests
     {
         var store = CreateStore();
 
-        var (found, value) = await store.TryGetAsync<string>("missing");
+        var (found, value) = await store.TryGetAsync<string>("missing", TestContext.Current.CancellationToken);
 
         Assert.False(found);
         Assert.Null(value);
@@ -58,8 +58,8 @@ public class MemoryCacheStoreTests
     {
         var store = CreateStore();
 
-        await store.SetAsync("key1", "async-hello");
-        var (found, value) = await store.TryGetAsync<string>("key1");
+        await store.SetAsync("key1", "async-hello", cancellationToken: TestContext.Current.CancellationToken);
+        var (found, value) = await store.TryGetAsync<string>("key1", TestContext.Current.CancellationToken);
 
         Assert.True(found);
         Assert.Equal("async-hello", value);
@@ -81,7 +81,7 @@ public class MemoryCacheStoreTests
     }
 
     [Fact]
-    public void RegisterEvictionCallback_CalledWhenEntryEvicted()
+    public async Task RegisterEvictionCallback_CalledWhenEntryEvicted()
     {
         var store = CreateStore();
         var tcs = new TaskCompletionSource<object?>();
@@ -90,7 +90,8 @@ public class MemoryCacheStoreTests
         store.Set("key1", 42);
         store.Remove("key1"); // triggers PostEvictionCallback (async)
 
-        Assert.True(tcs.Task.Wait(TimeSpan.FromSeconds(2)), "eviction callback was not fired");
-        Assert.Equal("key1", tcs.Task.Result);
+        var completed = await Task.WhenAny(tcs.Task, Task.Delay(TimeSpan.FromSeconds(2), TestContext.Current.CancellationToken)) == tcs.Task;
+        Assert.True(completed, "eviction callback was not fired");
+        Assert.Equal("key1", await tcs.Task);
     }
 }

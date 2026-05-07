@@ -52,8 +52,8 @@ public class DistributedCacheStoreTests
     {
         var store = CreateStore();
 
-        await store.SetAsync("key1", "async-value");
-        var (found, value) = await store.TryGetAsync<string>("key1");
+        await store.SetAsync("key1", "async-value", cancellationToken: TestContext.Current.CancellationToken);
+        var (found, value) = await store.TryGetAsync<string>("key1", TestContext.Current.CancellationToken);
 
         Assert.True(found);
         Assert.Equal("async-value", value);
@@ -63,11 +63,11 @@ public class DistributedCacheStoreTests
     public async Task RemoveAsync_AfterSetAsync_TryGetReturnsFalse()
     {
         var store = CreateStore();
-        await store.SetAsync("key1", 99);
+        await store.SetAsync("key1", 99, cancellationToken: TestContext.Current.CancellationToken);
 
-        await store.RemoveAsync("key1");
+        await store.RemoveAsync("key1", TestContext.Current.CancellationToken);
 
-        var (found, _) = await store.TryGetAsync<int>("key1");
+        var (found, _) = await store.TryGetAsync<int>("key1", TestContext.Current.CancellationToken);
         Assert.False(found);
     }
 }

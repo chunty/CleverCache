@@ -41,7 +41,8 @@ public class CleverCacheServiceTests
         var callCount = 0;
 
         var result = await sut.GetOrCreateAsync([typeof(string)], "key1",
-            async () => { callCount++; await Task.Yield(); return 42; });
+            async () => { callCount++; await Task.Yield(); return 42; },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(42, result);
         Assert.Equal(1, callCount);
@@ -54,9 +55,11 @@ public class CleverCacheServiceTests
         var callCount = 0;
 
         await sut.GetOrCreateAsync([typeof(string)], "key1",
-            async () => { callCount++; await Task.Yield(); return 42; });
+            async () => { callCount++; await Task.Yield(); return 42; },
+            cancellationToken: TestContext.Current.CancellationToken);
         var result = await sut.GetOrCreateAsync([typeof(string)], "key1",
-            async () => { callCount++; await Task.Yield(); return 99; });
+            async () => { callCount++; await Task.Yield(); return 99; },
+            cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(42, result);
         Assert.Equal(1, callCount);
@@ -68,9 +71,9 @@ public class CleverCacheServiceTests
         var sut = CreateService();
         var callCount = 0;
 
-        await sut.GetOrCreateAsync([typeof(string)], "key1", async () => { callCount++; await Task.Yield(); return 1; });
+        await sut.GetOrCreateAsync([typeof(string)], "key1", async () => { callCount++; await Task.Yield(); return 1; }, cancellationToken: TestContext.Current.CancellationToken);
         sut.Remove("key1");
-        await sut.GetOrCreateAsync([typeof(string)], "key1", async () => { callCount++; await Task.Yield(); return 2; });
+        await sut.GetOrCreateAsync([typeof(string)], "key1", async () => { callCount++; await Task.Yield(); return 2; }, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(2, callCount);
     }
@@ -81,13 +84,13 @@ public class CleverCacheServiceTests
         var sut = CreateService();
         var callCount = 0;
 
-        await sut.GetOrCreateAsync([typeof(string)], "key1", async () => { await Task.Yield(); return 1; });
-        await sut.GetOrCreateAsync([typeof(string)], "key2", async () => { await Task.Yield(); return 2; });
+        await sut.GetOrCreateAsync([typeof(string)], "key1", async () => { await Task.Yield(); return 1; }, cancellationToken: TestContext.Current.CancellationToken);
+        await sut.GetOrCreateAsync([typeof(string)], "key2", async () => { await Task.Yield(); return 2; }, cancellationToken: TestContext.Current.CancellationToken);
 
         sut.RemoveByType(typeof(string));
 
-        await sut.GetOrCreateAsync([typeof(string)], "key1", async () => { callCount++; await Task.Yield(); return 99; });
-        await sut.GetOrCreateAsync([typeof(string)], "key2", async () => { callCount++; await Task.Yield(); return 99; });
+        await sut.GetOrCreateAsync([typeof(string)], "key1", async () => { callCount++; await Task.Yield(); return 99; }, cancellationToken: TestContext.Current.CancellationToken);
+        await sut.GetOrCreateAsync([typeof(string)], "key2", async () => { callCount++; await Task.Yield(); return 99; }, cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.Equal(2, callCount);
     }
@@ -107,14 +110,15 @@ public class CleverCacheServiceTests
         {
             // Simulate a nested cached call with a DIFFERENT key — the original deadlock scenario
             var inner = await sut.GetOrCreateAsync([typeof(int)], "inner-key",
-                async () => { await Task.Yield(); return 99; });
+                async () => { await Task.Yield(); return 99; },
+                cancellationToken: TestContext.Current.CancellationToken);
 
             outerCompleted = true;
             return $"result:{inner}";
-        });
+        }, cancellationToken: TestContext.Current.CancellationToken);
 
         // If deadlocked, this will throw after the timeout rather than hang the test suite
-        var completed = await Task.WhenAny(task, Task.Delay(TimeSpan.FromSeconds(5)));
+        var completed = await Task.WhenAny(task, Task.Delay(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken));
 
         Assert.Same(task, completed); // task finished, not the timeout
         Assert.True(outerCompleted);
@@ -195,7 +199,7 @@ public class CleverCacheServiceTests
 
         sut.GetOrCreate([typeof(string)], "k1", () => 1);
         sut.GetOrCreate([typeof(string)], "k2", () => 2);
-        await sut.RemoveByTypeAsync(typeof(string));
+        await sut.RemoveByTypeAsync(typeof(string), TestContext.Current.CancellationToken);
 
         storeMock.Verify(s => s.RemoveAsync("k1", It.IsAny<CancellationToken>()), Times.Once);
         storeMock.Verify(s => s.RemoveAsync("k2", It.IsAny<CancellationToken>()), Times.Once);
