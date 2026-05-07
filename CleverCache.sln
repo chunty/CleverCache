@@ -13,6 +13,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleverCache.Tests", "Clever
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleverCache.EntityFrameworkCore", "CleverCache.EntityFrameworkCore\CleverCache.EntityFrameworkCore.csproj", "{96A9C78A-506E-4691-2C0B-35E0C678B967}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{C6C9B89B-A02A-48AA-94E4-D181F5BDB289}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{8D5E3E15-A947-4EC4-8E73-A99B45C8BA82}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\ci.yml = .github\workflows\ci.yml
+		.github\workflows\publish-wiki.yml = .github\workflows\publish-wiki.yml
+		.github\workflows\update-about.yml = .github\workflows\update-about.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -86,5 +95,11 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{8D5E3E15-A947-4EC4-8E73-A99B45C8BA82} = {C6C9B89B-A02A-48AA-94E4-D181F5BDB289}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5D6FA936-EAF9-4BA3-8509-8BA10E6D096A}
 	EndGlobalSection
 EndGlobal
