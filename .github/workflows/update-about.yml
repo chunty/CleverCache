@@ -25,7 +25,7 @@ jobs:
             --description "${{ steps.meta.outputs.description }}" \
             --homepage "https://github.com/$GITHUB_REPOSITORY/wiki"
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+          GH_TOKEN: ${{ secrets.SYNC_META_TOKEN }}
 
       - name: Replace topics from PackageTags
         run: |
@@ -41,4 +41,4 @@ jobs:
           echo "Topics: $TOPICS_JSON"
           echo "$TOPICS_JSON" | gh api --method PUT "/repos/$GITHUB_REPOSITORY/topics" --input -
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+          GH_TOKEN: ${{ secrets.SYNC_META_TOKEN }}
