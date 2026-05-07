@@ -1,5 +1,6 @@
 CleverCache
 ====================================================
+[![CI](https://github.com/chunty/CleverCache/actions/workflows/ci.yml/badge.svg)](https://github.com/chunty/CleverCache/actions/workflows/ci.yml)
 [![NuGet](https://img.shields.io/nuget/dt/clevercache.svg)](https://www.nuget.org/packages/clevercache) 
 [![NuGet](https://img.shields.io/nuget/vpre/clevercache.svg)](https://www.nuget.org/packages/clevercache)
 [![Publish Wiki](https://github.com/chunty/CleverCache/actions/workflows/publish-wiki.yml/badge.svg)](https://github.com/chunty/CleverCache/actions/workflows/publish-wiki.yml)
