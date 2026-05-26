@@ -2,6 +2,7 @@ name: Update Repo About
 # Requires a classic PAT with 'public_repo' scope stored as SYNC_META_TOKEN.
 
 on:
+  workflow_dispatch:
   push:
     branches: [master]
 

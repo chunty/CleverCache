@@ -1,6 +1,7 @@
 name: Publish Wiki
 
 on:
+  workflow_dispatch:
   push:
     branches: [master]
     paths: ['wiki/**']
@@ -19,4 +20,3 @@ jobs:
           path: wiki/
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
