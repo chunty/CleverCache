@@ -1,0 +1,38 @@
+name: Publish NuGet
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.x
+            9.x
+            10.x
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Pack
+        run: |
+          dotnet pack CleverCache.csproj --no-build --configuration Release --output ./artifacts
+          dotnet pack CleverCache.Redis/CleverCache.Redis.csproj --no-build --configuration Release --output ./artifacts
+          dotnet pack CleverCache.MediatR/CleverCache.MediatR.csproj --no-build --configuration Release --output ./artifacts
+          dotnet pack CleverCache.EntityFrameworkCore/CleverCache.EntityFrameworkCore.csproj --no-build --configuration Release --output ./artifacts
+
+      - name: Publish to NuGet
+        run: dotnet nuget push "./artifacts/*.nupkg" --api-key "${{ secrets.NUGET_API_KEY }}" --source "https://api.nuget.org/v3/index.json" --skip-duplicate
