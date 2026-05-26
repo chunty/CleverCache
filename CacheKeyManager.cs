@@ -1,7 +1,7 @@
 ﻿namespace CleverCache;
 using System.Collections.Concurrent;
 
-public abstract class CacheEntryManager: ICacheEntryManager
+internal abstract class CacheEntryManager
 {
 	// type -> set of keys (thread-safe “set” via ConcurrentDictionary<TKey, byte>)
 	private readonly ConcurrentDictionary<Type, ConcurrentDictionary<object, byte>> _keysByType = new();
@@ -32,10 +32,36 @@ public abstract class CacheEntryManager: ICacheEntryManager
 	}
 
 	/// <summary>
+	/// Removes a key from every type's tracked key set.
+	/// Called after a key is removed from the store so the tracking set stays in sync.
+	/// </summary>
+	protected void RemoveKeyFromAllTypes(object key)
+	{
+		foreach (var typeSet in _keysByType.Values)
+			typeSet.TryRemove(key, out _);
+	}
+
+	/// <summary>
 	/// Snapshot keys for a given type (safe to enumerate).
 	/// </summary>
 	protected object[] SnapshotKeysFor(Type type) =>
 		_keysByType.TryGetValue(type, out var set) ? set.Keys.ToArray() : [];
+
+	/// <summary>
+	/// Snapshot of the full dependency graph and tracked keys.
+	/// </summary>
+	protected CleverCacheDiagnostics SnapshotDiagnostics()
+	{
+		var dependants = _dependants.ToDictionary(
+			kvp => kvp.Key,
+			kvp => (IReadOnlyList<Type>)kvp.Value.Keys.OrderBy(t => t.Name).ToList());
+
+		var keysByType = _keysByType.ToDictionary(
+			kvp => kvp.Key,
+			kvp => (IReadOnlyList<object>)kvp.Value.Keys.ToList());
+
+		return new CleverCacheDiagnostics(dependants, keysByType);
+	}
 
 	/// <summary>
 	/// Transitive closure over dependents, cycle-safe

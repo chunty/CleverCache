@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<PackageId>CleverCache.Tests</PackageId>
+		<IsPackable>false</IsPackable>
+		<IsTestProject>true</IsTestProject>
+		<OutputType>Exe</OutputType>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" />
+		<PackageReference Include="Moq" />
+		<PackageReference Include="xunit.v3" />
+		<PackageReference Include="xunit.runner.visualstudio">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\CleverCache.csproj" />
+		<ProjectReference Include="..\CleverCache.MediatR\CleverCache.MediatR.csproj" />
+		<ProjectReference Include="..\CleverCache.EntityFrameworkCore\CleverCache.EntityFrameworkCore.csproj" />
+	</ItemGroup>
+</Project>

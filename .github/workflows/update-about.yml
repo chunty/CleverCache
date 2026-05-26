@@ -1,0 +1,45 @@
+name: Update Repo About
+# Requires a classic PAT with 'public_repo' scope stored as SYNC_META_TOKEN.
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract metadata from csproj
+        id: meta
+        run: |
+          DESCRIPTION=$(grep -oPm1 '(?<=<Description>)[^<]+' CleverCache.csproj)
+          TAGS=$(grep -oPm1 '(?<=<PackageTags>)[^<]+' CleverCache.csproj)
+
+          echo "description=$DESCRIPTION" >> $GITHUB_OUTPUT
+          echo "tags=$TAGS" >> $GITHUB_OUTPUT
+
+      - name: Update description and homepage
+        run: |
+          gh repo edit "$GITHUB_REPOSITORY" \
+            --description "${{ steps.meta.outputs.description }}" \
+            --homepage "https://github.com/$GITHUB_REPOSITORY/wiki"
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_META_TOKEN }}
+
+      - name: Replace topics from PackageTags
+        run: |
+          # Convert comma-separated tags to a JSON array of lowercase, hyphenated topics
+          TOPICS_JSON=$(echo "${{ steps.meta.outputs.tags }}" \
+            | tr ',' '\n' \
+            | sed 's/^ *//;s/ *$//' \
+            | tr '[:upper:]' '[:lower:]' \
+            | tr ' ' '-' \
+            | jq -R . \
+            | jq -sc '{names: .}')
+
+          echo "Topics: $TOPICS_JSON"
+          echo "$TOPICS_JSON" | gh api --method PUT "/repos/$GITHUB_REPOSITORY/topics" --input -
+        env:
+          GH_TOKEN: ${{ secrets.SYNC_META_TOKEN }}

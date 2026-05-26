@@ -1,0 +1,43 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <!-- Packages that don't vary by target framework -->
+  <ItemGroup>
+    <PackageVersion Include="AsyncKeyedLock" Version="8.0.2" />
+    <PackageVersion Include="MediatR" Version="[12.5.0,13.0.0)" />
+    <PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.10" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
+    <PackageVersion Include="Moq" Version="4.20.72" />
+    <PackageVersion Include="xunit.v3" Version="3.2.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+  </ItemGroup>
+  <!-- .NET 8 specific package versions -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <!-- Microsoft.Extensions.* 8.0.0 has known vulnerabilities; 9.x supports net8.0 and is patched -->
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="9.0.15" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.15" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.15" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.15" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.15" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.15" />
+  </ItemGroup>
+  <!-- .NET 9 specific package versions -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0'">
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="9.0.15" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.15" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.15" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.15" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.15" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.15" />
+  </ItemGroup>
+  <!-- .NET 10 specific package versions -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.8" />
+  </ItemGroup>
+</Project>
