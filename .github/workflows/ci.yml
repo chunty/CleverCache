@@ -31,4 +31,4 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Test
-        run: dotnet test CleverCache.Tests/CleverCache.Tests.csproj --no-build --configuration Release --logger "github" --verbosity normal
+        run: dotnet test CleverCache.Tests/CleverCache.Tests.csproj --no-build --configuration Release --logger "trx" --verbosity normal
