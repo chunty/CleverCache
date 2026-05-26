@@ -1,5 +1,3 @@
-using MediatR;
-using MediatR.Registration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace CleverCache.Mediatr;
