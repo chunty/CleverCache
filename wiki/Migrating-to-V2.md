@@ -39,6 +39,14 @@ dotnet add package CleverCache
 dotnet add package CleverCache.EntityFrameworkCore
 ```
 
+If you're using MediatR auto-caching via `[AutoCache]`, also install the separate MediatR integration package:
+
+```
+dotnet add package CleverCache.MediatR
+```
+
+`[AutoCache]` and `[InvalidatesCache]` live in `CleverCache.MediatR` in V2. Keep `CleverCache` for the core cache API, and add `CleverCache.MediatR` for MediatR pipeline attributes/behaviours. For full setup, see [MediatR Integration](MediatR-Integration).
+
 ---
 
 ### 2. Update DI registration
