@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.5.11716.220 stable
+VisualStudioVersion = 18.5.11716.220
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CleverCache", "CleverCache.csproj", "{2D79F3CA-DFEC-479F-BCA5-06B1935B22F3}"
 EndProject
@@ -18,6 +18,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{8D5E3E15-A947-4EC4-8E73-A99B45C8BA82}"
 	ProjectSection(SolutionItems) = preProject
 		.github\workflows\ci.yml = .github\workflows\ci.yml
+		.github\workflows\publish-nuget.yml = .github\workflows\publish-nuget.yml
 		.github\workflows\publish-wiki.yml = .github\workflows\publish-wiki.yml
 		.github\workflows\update-about.yml = .github\workflows\update-about.yml
 	EndProjectSection
