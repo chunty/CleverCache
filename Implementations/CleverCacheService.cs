@@ -7,10 +7,12 @@ internal class CleverCacheService : CacheEntryManager, ICleverCache
 {
 	private readonly ICleverCacheStore _store;
 	private readonly AsyncKeyedLocker<object> _locker = new();
+	private readonly bool _enableAsyncRaceConditionGuard;
 
 	public CleverCacheService(ICleverCacheStore store, CleverCacheOptions options)
 	{
 		_store = store;
+		_enableAsyncRaceConditionGuard = options.EnableAsyncRaceConditionGuard;
 		foreach (var dep in options.DependentCaches)
 			AddDependentCache(dep.Type, dep.DependentType);
 
@@ -20,34 +22,50 @@ internal class CleverCacheService : CacheEntryManager, ICleverCache
 
 	public TItem? GetOrCreate<TItem>(Type[] types, object key, Func<TItem> factory, CleverCacheEntryOptions? options = null)
 	{
+		TItem? CreateAndStore()
+		{
+			AddKeyToTypes(types, key);
+			var value = factory();
+			_store.Set(key, value, options);
+			return value;
+		}
+
 		if (_store.TryGet<TItem>(key, out var hit)) return hit;
+
+		if (!_enableAsyncRaceConditionGuard)
+			return CreateAndStore();
 
 		using var _ = _locker.Lock(key);
 
 		// Double-check: another thread may have populated the cache while we waited for the lock
 		if (_store.TryGet<TItem>(key, out hit)) return hit;
 
-		AddKeyToTypes(types, key);
-		var value = factory();
-		_store.Set(key, value, options);
-		return value;
+		return CreateAndStore();
 	}
 
 	public async Task<TItem?> GetOrCreateAsync<TItem>(Type[] types, object key, Func<Task<TItem>> factory, CleverCacheEntryOptions? options = null, CancellationToken cancellationToken = default)
 	{
+		async Task<TItem?> CreateAndStoreAsync()
+		{
+			AddKeyToTypes(types, key);
+			var value = await factory().ConfigureAwait(false);
+			await _store.SetAsync(key, value, options, cancellationToken).ConfigureAwait(false);
+			return value;
+		}
+
 		var (found, cached) = await _store.TryGetAsync<TItem>(key, cancellationToken).ConfigureAwait(false);
 		if (found) return cached;
 
-		using var _ = await _locker.LockAsync(key).ConfigureAwait(false);
+		if (!_enableAsyncRaceConditionGuard)
+			return await CreateAndStoreAsync().ConfigureAwait(false);
+
+		using var _ = await _locker.LockAsync(key, cancellationToken).ConfigureAwait(false);
 
 		// Double-check: another thread may have populated the cache while we waited for the lock
 		(found, cached) = await _store.TryGetAsync<TItem>(key, cancellationToken).ConfigureAwait(false);
 		if (found) return cached;
 
-		AddKeyToTypes(types, key);
-		var value = await factory().ConfigureAwait(false);
-		await _store.SetAsync(key, value, options, cancellationToken).ConfigureAwait(false);
-		return value;
+		return await CreateAndStoreAsync().ConfigureAwait(false);
 	}
 
 	public void RemoveByType(Type type)
@@ -76,4 +94,3 @@ internal class CleverCacheService : CacheEntryManager, ICleverCache
 
 	public CleverCacheDiagnostics GetDiagnostics() => SnapshotDiagnostics();
 }
-

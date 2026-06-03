@@ -6,8 +6,10 @@ namespace CleverCache.Tests;
 
 public class CleverCacheServiceTests
 {
-    private static CleverCacheService CreateService(ICleverCacheStore? store = null)
-        => new(store ?? new MemoryCacheStore(new MemoryCache(new MemoryCacheOptions())), new CleverCacheOptions());
+    private static CleverCacheService CreateService(ICleverCacheStore? store = null, CleverCacheOptions? options = null)
+        => new(
+            store ?? new MemoryCacheStore(new MemoryCache(new MemoryCacheOptions())),
+            options ?? new CleverCacheOptions());
 
     [Fact]
     public void GetOrCreate_CacheMiss_InvokesFactory()
@@ -32,6 +34,61 @@ public class CleverCacheServiceTests
 
         Assert.Equal(42, result);
         Assert.Equal(1, callCount);
+    }
+
+    [Fact]
+    public async Task GetOrCreate_ConcurrentRequestsSameKey_WithRaceConditionGuardEnabled_FactoryCalledOnce()
+    {
+        var sut = CreateService(options: new CleverCacheOptions { EnableAsyncRaceConditionGuard = true });
+        var callCount = 0;
+        using var gate = new ManualResetEventSlim(false);
+
+        var tasks = Enumerable.Range(0, 20).Select(_ => Task.Run(() =>
+            sut.GetOrCreate([typeof(string)], "sync-stampede-key", () =>
+            {
+                gate.Wait(TestContext.Current.CancellationToken);
+                Interlocked.Increment(ref callCount);
+                return 42;
+            }), TestContext.Current.CancellationToken)).ToArray();
+
+        await Task.Delay(30, TestContext.Current.CancellationToken);
+        gate.Set();
+        var results = await Task.WhenAll(tasks);
+
+        Assert.Equal(1, callCount);
+        Assert.All(results, r => Assert.Equal(42, r));
+    }
+
+    [Fact]
+    public async Task GetOrCreate_ConcurrentRequestsSameKey_WithRaceConditionGuardDisabled_AllowsConcurrentFactoryExecution()
+    {
+        var sut = CreateService();
+        var callCount = 0;
+        var inFlight = 0;
+        var maxInFlight = 0;
+
+        var tasks = Enumerable.Range(0, 20).Select(_ => Task.Run(() =>
+            sut.GetOrCreate([typeof(string)], "sync-stampede-key-disabled-guard", () =>
+            {
+                Interlocked.Increment(ref callCount);
+                var current = Interlocked.Increment(ref inFlight);
+                while (true)
+                {
+                    var observedMax = maxInFlight;
+                    if (current <= observedMax || Interlocked.CompareExchange(ref maxInFlight, current, observedMax) == observedMax)
+                        break;
+                }
+
+                Thread.Sleep(30);
+                Interlocked.Decrement(ref inFlight);
+                return 42;
+            }), TestContext.Current.CancellationToken)).ToArray();
+
+        var results = await Task.WhenAll(tasks);
+
+        Assert.True(callCount > 1);
+        Assert.True(maxInFlight > 1);
+        Assert.All(results, r => Assert.Equal(42, r));
     }
 
     [Fact]
@@ -128,7 +185,7 @@ public class CleverCacheServiceTests
     [Fact]
     public async Task GetOrCreateAsync_ConcurrentRequestsSameKey_FactoryCalledOnce()
     {
-        var sut = CreateService();
+        var sut = CreateService(options: new CleverCacheOptions { EnableAsyncRaceConditionGuard = true });
         var callCount = 0;
         var tcs = new TaskCompletionSource();
 
@@ -145,6 +202,38 @@ public class CleverCacheServiceTests
         var results = await Task.WhenAll(tasks);
 
         Assert.Equal(1, callCount);
+        Assert.All(results, r => Assert.Equal(42, r));
+    }
+
+    [Fact]
+    public async Task GetOrCreateAsync_ConcurrentRequestsSameKey_WithRaceConditionGuardDisabled_AllowsConcurrentFactoryExecution()
+    {
+        var sut = CreateService();
+        var callCount = 0;
+        var inFlight = 0;
+        var maxInFlight = 0;
+
+        var tasks = Enumerable.Range(0, 20).Select(_ =>
+            sut.GetOrCreateAsync([typeof(string)], "stampede-key-disabled-guard", async () =>
+            {
+                Interlocked.Increment(ref callCount);
+                var current = Interlocked.Increment(ref inFlight);
+                while (true)
+                {
+                    var observedMax = maxInFlight;
+                    if (current <= observedMax || Interlocked.CompareExchange(ref maxInFlight, current, observedMax) == observedMax)
+                        break;
+                }
+
+                await Task.Delay(30, TestContext.Current.CancellationToken);
+                Interlocked.Decrement(ref inFlight);
+                return 42;
+            })).ToArray();
+
+        var results = await Task.WhenAll(tasks);
+
+        Assert.True(callCount > 1);
+        Assert.True(maxInFlight > 1);
         Assert.All(results, r => Assert.Equal(42, r));
     }
 

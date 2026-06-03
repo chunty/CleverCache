@@ -13,6 +13,12 @@ public class CleverCacheOptions(HashSet<DependentCache>? dependentCaches = null)
 	public HashSet<DependentCache> DependentCaches { get; set; } = dependentCaches ?? [];
 
 	/// <summary>
+	/// Enables the async post-lock cache re-check in <c>GetOrCreateAsync</c> to prevent duplicate factory execution
+	/// when multiple callers race on the same key.
+	/// </summary>
+	public bool EnableAsyncRaceConditionGuard { get; set; } = false;
+
+	/// <summary>
 	/// Scans the assembly containing <typeparamref name="T"/> for <see cref="DependentCachesAttribute"/>
 	/// and registers the declared cache dependency relationships.
 	/// Use this instead of relying on <c>UseCleverCache&lt;TContext&gt;()</c> for attribute-based configuration.
