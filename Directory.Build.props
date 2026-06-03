@@ -6,10 +6,11 @@
 		<Authors>Chris Hunt</Authors>
 		<Company>TappetyClick</Company>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<RepositoryUrl>https://github.com/chunty/Simpository</RepositoryUrl>
+		<RepositoryUrl>https://github.com/chunty/CleverCache</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
-		<PackageProjectUrl>https://github.com/chunty/Simpository</PackageProjectUrl>
+		<PackageProjectUrl>https://github.com/chunty/CleverCache</PackageProjectUrl>
 		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+		<MinVerTagPrefix>v</MinVerTagPrefix>
 	</PropertyGroup>
 	<ItemGroup>
 		<PackageReference Include="MinVer" PrivateAssets="all" />
