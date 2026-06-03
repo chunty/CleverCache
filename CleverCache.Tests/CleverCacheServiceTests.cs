@@ -62,32 +62,30 @@ public class CleverCacheServiceTests
     [Fact]
     public async Task GetOrCreate_ConcurrentRequestsSameKey_WithRaceConditionGuardDisabled_AllowsConcurrentFactoryExecution()
     {
+        const int threadCount = 20;
         var sut = CreateService();
         var callCount = 0;
-        var inFlight = 0;
-        var maxInFlight = 0;
+        // Gate blocks factory from completing until all threads are inside,
+        // guaranteeing concurrent execution regardless of thread pool scheduling.
+        using var gate = new ManualResetEventSlim(false);
+        using var allInFactory = new CountdownEvent(threadCount);
 
-        var tasks = Enumerable.Range(0, 20).Select(_ => Task.Run(() =>
+        var tasks = Enumerable.Range(0, threadCount).Select(_ => Task.Run(() =>
             sut.GetOrCreate([typeof(string)], "sync-stampede-key-disabled-guard", () =>
             {
                 Interlocked.Increment(ref callCount);
-                var current = Interlocked.Increment(ref inFlight);
-                while (true)
-                {
-                    var observedMax = maxInFlight;
-                    if (current <= observedMax || Interlocked.CompareExchange(ref maxInFlight, current, observedMax) == observedMax)
-                        break;
-                }
-
-                Thread.Sleep(30);
-                Interlocked.Decrement(ref inFlight);
+                allInFactory.Signal();
+                gate.Wait(TestContext.Current.CancellationToken);
                 return 42;
             }), TestContext.Current.CancellationToken)).ToArray();
 
+        // Wait until all threads are inside the factory, then release them
+        allInFactory.Wait(TestContext.Current.CancellationToken);
+        gate.Set();
+
         var results = await Task.WhenAll(tasks);
 
-        Assert.True(callCount > 1);
-        Assert.True(maxInFlight > 1);
+        Assert.Equal(threadCount, callCount);
         Assert.All(results, r => Assert.Equal(42, r));
     }
 
