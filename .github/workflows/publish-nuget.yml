@@ -27,7 +27,15 @@ jobs:
       - name: Restore
         run: dotnet restore
 
+      - name: Debug git state
+        run: |
+          git log --oneline --decorate -5
+          git tag -l
+          git describe --tags --long || echo "git describe failed"
+
       - name: Build
+        env:
+          MINVER_VERBOSITY: diagnostic
         run: dotnet build --no-restore --configuration Release
 
       - name: Pack
