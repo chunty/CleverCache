@@ -1,7 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<PackageId>CleverCache</PackageId>
-		<Version>2.0.0</Version>
 		<PackageProjectUrl>https://github.com/chunty/CleverCache/wiki</PackageProjectUrl>
 		<Description>Like MemoryCache but better! Automatically invalidates cache by entity type, supports memory cache, distributed cache, or a custom provider.</Description>
 		<PackageTags>MemoryCache,DistributedCache,Automatic Cache,Cache Invalidation</PackageTags>

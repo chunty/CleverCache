@@ -4,6 +4,7 @@
   </PropertyGroup>
   <!-- Packages that don't vary by target framework -->
   <ItemGroup>
+    <PackageVersion Include="MinVer" Version="6.0.0" />
     <PackageVersion Include="AsyncKeyedLock" Version="8.0.2" />
     <PackageVersion Include="MediatR" Version="[12.5.0,13.0.0)" />
     <PackageVersion Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.10" />
