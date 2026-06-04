@@ -70,4 +70,54 @@ public class DistributedCacheStoreTests
         var (found, _) = await store.TryGetAsync<int>("key1", TestContext.Current.CancellationToken);
         Assert.False(found);
     }
+
+    [Fact]
+    public void Set_EquivalentObjectKeys_ReusesSameEntry()
+    {
+        var store = CreateStore();
+
+        store.Set(new DistQueryKey(7, ["one", "two"]), "value-a");
+        var found = store.TryGet<string>(new DistQueryKey(7, ["one", "two"]), out var value);
+
+        Assert.True(found);
+        Assert.Equal("value-a", value);
+    }
+
+    [Fact]
+    public void Set_DifferentTypesSameData_DoNotCollide()
+    {
+        var store = CreateStore();
+
+        store.Set(new DistQueryKeyA(9), "value-a");
+        store.Set(new DistQueryKeyB(9), "value-b");
+
+        Assert.True(store.TryGet<string>(new DistQueryKeyA(9), out var valueA));
+        Assert.True(store.TryGet<string>(new DistQueryKeyB(9), out var valueB));
+        Assert.Equal("value-a", valueA);
+        Assert.Equal("value-b", valueB);
+    }
+
+    private sealed class DistQueryKey
+    {
+        public DistQueryKey(int id, IEnumerable<string> names)
+        {
+            Id = id;
+            Names = names;
+        }
+
+        public int Id { get; }
+        public IEnumerable<string> Names { get; }
+    }
+
+    private sealed class DistQueryKeyA
+    {
+        public DistQueryKeyA(int id) => Id = id;
+        public int Id { get; }
+    }
+
+    private sealed class DistQueryKeyB
+    {
+        public DistQueryKeyB(int id) => Id = id;
+        public int Id { get; }
+    }
 }

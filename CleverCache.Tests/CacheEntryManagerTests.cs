@@ -3,7 +3,7 @@ namespace CleverCache.Tests;
 // Concrete subclass so we can test the abstract CacheEntryManager via its public API
 file class TestCacheManager : CacheEntryManager
 {
-    public object[] KeysFor(Type type) => SnapshotKeysFor(type);
+    public string[] KeysFor(Type type) => SnapshotKeysFor(type);
     public CleverCacheDiagnostics Diagnostics() => SnapshotDiagnostics();
 }
 
@@ -13,21 +13,23 @@ public class CacheEntryManagerTests
     public void AddKeyToTypes_AssociatesKeyWithType()
     {
         var mgr = new TestCacheManager();
+        var expected = CacheKeyIdentity.ToCanonicalKey("myKey");
 
         mgr.AddKeyToTypes([typeof(string)], "myKey");
 
-        Assert.Contains("myKey", mgr.KeysFor(typeof(string)));
+        Assert.Contains(expected, mgr.KeysFor(typeof(string)));
     }
 
     [Fact]
     public void AddKeyToTypes_MultipleTypes_KeyAssociatedWithAll()
     {
         var mgr = new TestCacheManager();
+        var expected = CacheKeyIdentity.ToCanonicalKey("sharedKey");
 
         mgr.AddKeyToTypes([typeof(string), typeof(int)], "sharedKey");
 
-        Assert.Contains("sharedKey", mgr.KeysFor(typeof(string)));
-        Assert.Contains("sharedKey", mgr.KeysFor(typeof(int)));
+        Assert.Contains(expected, mgr.KeysFor(typeof(string)));
+        Assert.Contains(expected, mgr.KeysFor(typeof(int)));
     }
 
     [Fact]
@@ -35,11 +37,12 @@ public class CacheEntryManagerTests
     {
         var mgr = new TestCacheManager();
         mgr.AddDependentCache(typeof(string), typeof(int));
+        var expected = CacheKeyIdentity.ToCanonicalKey("key1");
 
         mgr.AddKeyToTypes([typeof(string)], "key1");
 
-        Assert.Contains("key1", mgr.KeysFor(typeof(string)));
-        Assert.Contains("key1", mgr.KeysFor(typeof(int)));
+        Assert.Contains(expected, mgr.KeysFor(typeof(string)));
+        Assert.Contains(expected, mgr.KeysFor(typeof(int)));
     }
 
     [Fact]
@@ -49,12 +52,13 @@ public class CacheEntryManagerTests
         var mgr = new TestCacheManager();
         mgr.AddDependentCache(typeof(string), typeof(int));
         mgr.AddDependentCache(typeof(int), typeof(bool));
+        var expected = CacheKeyIdentity.ToCanonicalKey("transitiveKey");
 
         mgr.AddKeyToTypes([typeof(string)], "transitiveKey");
 
-        Assert.Contains("transitiveKey", mgr.KeysFor(typeof(string)));
-        Assert.Contains("transitiveKey", mgr.KeysFor(typeof(int)));
-        Assert.Contains("transitiveKey", mgr.KeysFor(typeof(bool)));
+        Assert.Contains(expected, mgr.KeysFor(typeof(string)));
+        Assert.Contains(expected, mgr.KeysFor(typeof(int)));
+        Assert.Contains(expected, mgr.KeysFor(typeof(bool)));
     }
 
     [Fact]
@@ -64,12 +68,13 @@ public class CacheEntryManagerTests
         var mgr = new TestCacheManager();
         mgr.AddDependentCache(typeof(string), typeof(int));
         mgr.AddDependentCache(typeof(int), typeof(string));
+        var expected = CacheKeyIdentity.ToCanonicalKey("cycleKey");
 
         var ex = Record.Exception(() => mgr.AddKeyToTypes([typeof(string)], "cycleKey"));
 
         Assert.Null(ex);
-        Assert.Contains("cycleKey", mgr.KeysFor(typeof(string)));
-        Assert.Contains("cycleKey", mgr.KeysFor(typeof(int)));
+        Assert.Contains(expected, mgr.KeysFor(typeof(string)));
+        Assert.Contains(expected, mgr.KeysFor(typeof(int)));
     }
 
     [Fact]
@@ -88,12 +93,13 @@ public class CacheEntryManagerTests
         mgr.AddKeyToTypes([typeof(string)], "k1");
 
         var d = mgr.Diagnostics();
+        var expected = CacheKeyIdentity.ToCanonicalKey("k1");
 
         Assert.True(d.Dependants.ContainsKey(typeof(string)));
         Assert.Contains(typeof(int), d.Dependants[typeof(string)]);
         Assert.True(d.KeysByType.ContainsKey(typeof(string)));
-        Assert.Contains("k1", d.KeysByType[typeof(string)]);
+        Assert.Contains(expected, d.KeysByType[typeof(string)]);
         // int inherits the key via cascade expansion
-        Assert.Contains("k1", d.KeysByType[typeof(int)]);
+        Assert.Contains(expected, d.KeysByType[typeof(int)]);
     }
 }

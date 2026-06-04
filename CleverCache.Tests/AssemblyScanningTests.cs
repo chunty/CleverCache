@@ -68,11 +68,12 @@ public class AssemblyScanningTests
 
         var store = new MemoryCacheStore(new MemoryCache(new MemoryCacheOptions()));
         var cache = new TestCacheManager2(store, options);
+        var expected = CacheKeyIdentity.ToCanonicalKey("cascade-key");
 
         // Adding a key for ScanPrimary should cascade to ScanDependent (wired via [DependentCaches] attribute)
         cache.AddKeyToTypes([typeof(ScanPrimary)], "cascade-key");
 
-        Assert.Contains("cascade-key", cache.KeysFor(typeof(ScanDependent)));
+        Assert.Contains(expected, cache.KeysFor(typeof(ScanDependent)));
     }
 }
 
@@ -80,5 +81,5 @@ public class AssemblyScanningTests
 file class TestCacheManager2 : CleverCacheService
 {
     public TestCacheManager2(ICleverCacheStore store, CleverCacheOptions options) : base(store, options) { }
-    public object[] KeysFor(Type type) => SnapshotKeysFor(type);
+    public string[] KeysFor(Type type) => SnapshotKeysFor(type);
 }

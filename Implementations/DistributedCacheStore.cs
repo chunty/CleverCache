@@ -5,7 +5,7 @@ namespace CleverCache.Implementations;
 
 public class DistributedCacheStore(IDistributedCache distributedCache) : ICleverCacheStore
 {
-	private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+	private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web);
 
 	public bool TryGet<TItem>(object key, out TItem? value)
 	{
@@ -16,7 +16,7 @@ public class DistributedCacheStore(IDistributedCache distributedCache) : IClever
 			return false;
 		}
 
-		value = JsonSerializer.Deserialize<TItem>(bytes, JsonOptions);
+		value = JsonSerializer.Deserialize<TItem>(bytes, _jsonOptions);
 		return true;
 	}
 
@@ -25,19 +25,19 @@ public class DistributedCacheStore(IDistributedCache distributedCache) : IClever
 		var bytes = await distributedCache.GetAsync(ToStringKey(key), cancellationToken).ConfigureAwait(false);
 		if (bytes is null) return (false, default);
 
-		var value = JsonSerializer.Deserialize<TItem>(bytes, JsonOptions);
+		var value = JsonSerializer.Deserialize<TItem>(bytes, _jsonOptions);
 		return (true, value);
 	}
 
 	public void Set<TItem>(object key, TItem value, CleverCacheEntryOptions? options = null)
 	{
-		var bytes = JsonSerializer.SerializeToUtf8Bytes(value, JsonOptions);
+		var bytes = JsonSerializer.SerializeToUtf8Bytes(value, _jsonOptions);
 		distributedCache.Set(ToStringKey(key), bytes, ToDistributedOptions(options));
 	}
 
 	public async Task SetAsync<TItem>(object key, TItem value, CleverCacheEntryOptions? options = null, CancellationToken cancellationToken = default)
 	{
-		var bytes = JsonSerializer.SerializeToUtf8Bytes(value, JsonOptions);
+		var bytes = JsonSerializer.SerializeToUtf8Bytes(value, _jsonOptions);
 		await distributedCache.SetAsync(ToStringKey(key), bytes, ToDistributedOptions(options), cancellationToken).ConfigureAwait(false);
 	}
 
@@ -47,7 +47,9 @@ public class DistributedCacheStore(IDistributedCache distributedCache) : IClever
 		await distributedCache.RemoveAsync(ToStringKey(key), cancellationToken).ConfigureAwait(false);
 
 	private static string ToStringKey(object key) =>
-		JsonSerializer.Serialize(key, JsonOptions);
+		key is string s && CacheKeyIdentity.IsCanonicalKey(s)
+			? s
+			: CacheKeyIdentity.ToCanonicalKey(key);
 
 	private static DistributedCacheEntryOptions ToDistributedOptions(CleverCacheEntryOptions? options) =>
 		options is null

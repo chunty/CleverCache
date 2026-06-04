@@ -37,6 +37,37 @@ public class CleverCacheServiceTests
     }
 
     [Fact]
+    public void GetOrCreate_EquivalentObjectKeys_ReuseSameEntry()
+    {
+        var sut = CreateService();
+        var callCount = 0;
+
+        var key1 = new QueryKey(123, ["one", "two"]);
+        var key2 = new QueryKey(123, ["one", "two"]);
+
+        var first = sut.GetOrCreate([typeof(string)], key1, () => { callCount++; return 42; });
+        var second = sut.GetOrCreate([typeof(string)], key2, () => { callCount++; return 99; });
+
+        Assert.Equal(42, first);
+        Assert.Equal(42, second);
+        Assert.Equal(1, callCount);
+    }
+
+    [Fact]
+    public void GetOrCreate_DifferentKeyTypesSameData_DoNotCollide()
+    {
+        var sut = CreateService();
+        var callCount = 0;
+
+        var a = sut.GetOrCreate([typeof(string)], new QueryKeyA(1), () => { callCount++; return "A"; });
+        var b = sut.GetOrCreate([typeof(string)], new QueryKeyB(1), () => { callCount++; return "B"; });
+
+        Assert.Equal("A", a);
+        Assert.Equal("B", b);
+        Assert.Equal(2, callCount);
+    }
+
+    [Fact]
     public async Task GetOrCreate_ConcurrentRequestsSameKey_WithRaceConditionGuardEnabled_FactoryCalledOnce()
     {
         var sut = CreateService(options: new CleverCacheOptions { EnableAsyncRaceConditionGuard = true });
@@ -129,6 +160,22 @@ public class CleverCacheServiceTests
         await sut.GetOrCreateAsync([typeof(string)], "key1", async () => { callCount++; await Task.Yield(); return 1; }, cancellationToken: TestContext.Current.CancellationToken);
         sut.Remove("key1");
         await sut.GetOrCreateAsync([typeof(string)], "key1", async () => { callCount++; await Task.Yield(); return 2; }, cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.Equal(2, callCount);
+    }
+
+    [Fact]
+    public void Remove_EquivalentObjectKey_RemovesMatchingEntry()
+    {
+        var sut = CreateService();
+        var callCount = 0;
+
+        var key1 = new QueryKey(321, ["x", "y"]);
+        var key2 = new QueryKey(321, ["x", "y"]);
+
+        sut.GetOrCreate([typeof(string)], key1, () => { callCount++; return 1; });
+        sut.Remove(key2);
+        sut.GetOrCreate([typeof(string)], key1, () => { callCount++; return 2; });
 
         Assert.Equal(2, callCount);
     }
@@ -243,9 +290,10 @@ public class CleverCacheServiceTests
         sut.GetOrCreate([typeof(string)], "k1", () => 1);
 
         var d = sut.GetDiagnostics();
+        var expected = CacheKeyIdentity.ToCanonicalKey("k1");
 
         Assert.Contains(typeof(int), d.Dependants[typeof(string)]);
-        Assert.Contains("k1", d.KeysByType[typeof(string)]);
+        Assert.Contains(expected, d.KeysByType[typeof(string)]);
     }
 
     [Fact]
@@ -275,7 +323,7 @@ public class CleverCacheServiceTests
         var keyText = Assert.IsType<string>(Assert.Single(d.KeysByType[typeof(string)]));
 
         Assert.Contains("DeferredNamesQuery", keyText);
-        Assert.Contains("[\"Size\", \"Color\"]", keyText);
+        Assert.Contains("\"names\":[\"Size\",\"Color\"]", keyText);
         Assert.DoesNotContain("ListSelectIterator", keyText);
     }
 
@@ -319,8 +367,8 @@ public class CleverCacheServiceTests
         sut.GetOrCreate([typeof(string)], "k2", () => 2);
         await sut.RemoveByTypeAsync(typeof(string), TestContext.Current.CancellationToken);
 
-        storeMock.Verify(s => s.RemoveAsync("k1", It.IsAny<CancellationToken>()), Times.Once);
-        storeMock.Verify(s => s.RemoveAsync("k2", It.IsAny<CancellationToken>()), Times.Once);
+        storeMock.Verify(s => s.RemoveAsync(CacheKeyIdentity.ToCanonicalKey("k1"), It.IsAny<CancellationToken>()), Times.Once);
+        storeMock.Verify(s => s.RemoveAsync(CacheKeyIdentity.ToCanonicalKey("k2"), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -352,6 +400,29 @@ public class CleverCacheServiceTests
     }
 
     private sealed record DeferredNamesQuery(IEnumerable<string> Names);
+    private sealed class QueryKey
+    {
+        public QueryKey(int id, IEnumerable<string> names)
+        {
+            Id = id;
+            Names = names;
+        }
+
+        public int Id { get; }
+        public IEnumerable<string> Names { get; }
+    }
+
+    private sealed class QueryKeyA
+    {
+        public QueryKeyA(int id) => Id = id;
+        public int Id { get; }
+    }
+
+    private sealed class QueryKeyB
+    {
+        public QueryKeyB(int id) => Id = id;
+        public int Id { get; }
+    }
 
     [Fact]
     public void Eviction_WhenStoreSupportsNotification_CleansUpKeyFromTypeSets()
@@ -359,11 +430,12 @@ public class CleverCacheServiceTests
         // MemoryCacheStore implements IEvictionNotifyingStore — eviction should clean up _keysByType
         var sut = CreateService();
         sut.GetOrCreate([typeof(string)], "k1", () => 1);
+        var expected = CacheKeyIdentity.ToCanonicalKey("k1");
 
-        Assert.Contains("k1", sut.GetDiagnostics().KeysByType[typeof(string)]);
+        Assert.Contains(expected, sut.GetDiagnostics().KeysByType[typeof(string)]);
 
         sut.Remove("k1"); // triggers store eviction → PostEvictionCallback → RemoveKeyFromAllTypes
 
-        Assert.DoesNotContain("k1", sut.GetDiagnostics().KeysByType.GetValueOrDefault(typeof(string)) ?? []);
+        Assert.DoesNotContain(expected, sut.GetDiagnostics().KeysByType.GetValueOrDefault(typeof(string)) ?? []);
     }
 }
