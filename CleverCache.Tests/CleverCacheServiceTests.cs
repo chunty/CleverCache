@@ -249,6 +249,21 @@ public class CleverCacheServiceTests
     }
 
     [Fact]
+    public void GetDiagnostics_ComplexKey_IsProjectedToSerializableValue()
+    {
+        var sut = CreateService();
+        Func<int> complexKey = () => 123;
+
+        sut.GetOrCreate([typeof(string)], complexKey, () => 1);
+
+        var d = sut.GetDiagnostics();
+        var key = Assert.Single(d.KeysByType[typeof(string)]);
+
+        var keyText = Assert.IsType<string>(key);
+        Assert.Contains("System.Func", keyText);
+    }
+
+    [Fact]
     public void RenderDependencyTree_ContainsTypeNamesAndKeys()
     {
         var sut = CreateService();

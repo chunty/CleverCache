@@ -58,10 +58,17 @@ internal abstract class CacheEntryManager
 
 		var keysByType = _keysByType.ToDictionary(
 			kvp => kvp.Key,
-			kvp => (IReadOnlyList<object>)kvp.Value.Keys.ToList());
+			kvp => (IReadOnlyList<object>)kvp.Value.Keys.Select(SerializeDiagnosticKey).ToList());
 
 		return new CleverCacheDiagnostics(dependants, keysByType);
 	}
+
+	private static object SerializeDiagnosticKey(object key) => key switch
+	{
+		string s => s,
+		ValueType v => v,
+		_ => key.ToString() ?? key.GetType().FullName ?? key.GetType().Name
+	};
 
 	/// <summary>
 	/// Transitive closure over dependents, cycle-safe
@@ -84,4 +91,3 @@ internal abstract class CacheEntryManager
 		return visited;
 	}
 }
-
