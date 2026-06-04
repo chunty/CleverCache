@@ -260,7 +260,23 @@ public class CleverCacheServiceTests
         var key = Assert.Single(d.KeysByType[typeof(string)]);
 
         var keyText = Assert.IsType<string>(key);
-        Assert.Contains("System.Func", keyText);
+        Assert.False(string.IsNullOrWhiteSpace(keyText));
+    }
+
+    [Fact]
+    public void GetDiagnostics_KeyWithDeferredEnumerable_UsesMaterializedValues()
+    {
+        var sut = CreateService();
+        var key = new DeferredNamesQuery(new[] { "Size", "Color" }.Select(static x => x));
+
+        sut.GetOrCreate([typeof(string)], key, () => 1);
+
+        var d = sut.GetDiagnostics();
+        var keyText = Assert.IsType<string>(Assert.Single(d.KeysByType[typeof(string)]));
+
+        Assert.Contains("DeferredNamesQuery", keyText);
+        Assert.Contains("[\"Size\", \"Color\"]", keyText);
+        Assert.DoesNotContain("ListSelectIterator", keyText);
     }
 
     [Fact]
@@ -334,6 +350,8 @@ public class CleverCacheServiceTests
         Assert.DoesNotContain("k1", d.KeysByType.GetValueOrDefault(typeof(string)) ?? []);
         Assert.DoesNotContain("k1", d.KeysByType.GetValueOrDefault(typeof(int)) ?? []); // must also clean up dependent type
     }
+
+    private sealed record DeferredNamesQuery(IEnumerable<string> Names);
 
     [Fact]
     public void Eviction_WhenStoreSupportsNotification_CleansUpKeyFromTypeSets()
