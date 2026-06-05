@@ -36,6 +36,9 @@ No changes to the handler — caching is handled entirely by the pipeline behavi
 
 When any `Order` is saved via EF Core, all `GetOrdersQuery` cache entries are automatically evicted.
 
+> [!WARNING]
+> ⚠️ **WARNING:** The request object is used as the cache key by default. That works well for simple request records, but complex members such as expressions or deferred enumerables can produce awkward keys. If a query needs a custom shape, add a type-specific cache key provider instead of relying on the default object form (see [Cache Key Providers](Cache-Key-Providers)). If CleverCache still cannot produce a stable key, it will log a warning and skip caching for that request.
+
 ### Multiple types
 
 ```csharp

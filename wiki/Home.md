@@ -11,6 +11,7 @@ With a small amount of configuration, CleverCache automatically tracks changes v
 | [Getting Started](Getting-Started) | Install, configure EF Core interceptor, register services |
 | [Caching Data](Caching-Data) | `GetOrCreate`, multi-type associations, entry options |
 | [Cache Providers](Cache-Providers) | Memory, distributed, Redis, custom providers |
+| [Cache Key Providers](Cache-Key-Providers) | Type-specific overrides for complex cache keys |
 | [Dependent Caches](Dependent-Caches) | `AddKeyToType`, `AddDependentCache`, `[DependentCaches]` attribute |
 | [MediatR Integration](MediatR-Integration) | `[AutoCache]`, `[InvalidatesCache]`, pipeline setup |
 | [Bulk Operations](Bulk-Operations) | Handling `ExecuteDelete`/`ExecuteUpdate` and non-EF writes |

@@ -21,6 +21,7 @@
     <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.15" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.15" />
     <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.15" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.15" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.15" />
   </ItemGroup>
   <!-- .NET 9 specific package versions -->
@@ -30,6 +31,7 @@
     <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.15" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.15" />
     <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="9.0.15" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.15" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.15" />
   </ItemGroup>
   <!-- .NET 10 specific package versions -->
@@ -39,6 +41,7 @@
     <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.8" />
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.8" />
     <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.8" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.8" />
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.8" />
   </ItemGroup>
 </Project>

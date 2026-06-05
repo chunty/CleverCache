@@ -54,11 +54,56 @@ public class CleverCacheOptions(HashSet<DependentCache>? dependentCaches = null)
 		return this;
 	}
 
+	/// <summary>
+	/// Scans the assembly containing <typeparamref name="T"/> for <see cref="ICacheKeyProvider{T}"/>
+	/// implementations and registers the discovered providers.
+	/// </summary>
+	public CleverCacheOptions ScanKeyProviderAssemblies<T>() => ScanKeyProviderAssemblies(typeof(T).Assembly);
+
+	/// <summary>
+	/// Scans the specified assemblies for closed <see cref="ICacheKeyProvider{T}"/> implementations.
+	/// </summary>
+	public CleverCacheOptions ScanKeyProviderAssemblies(params Assembly[] assemblies)
+	{
+		ComposeKeyProviderRegistration(services =>
+		{
+			foreach (var assembly in assemblies)
+			{
+				foreach (var type in assembly.GetTypes())
+				{
+					if (type.IsAbstract || type.IsInterface) continue;
+
+					foreach (var iface in type.GetInterfaces())
+					{
+						if (!iface.IsGenericType || iface.GetGenericTypeDefinition() != typeof(ICacheKeyProvider<>))
+							continue;
+
+						services.TryAddSingleton(iface, type);
+					}
+				}
+			}
+		});
+
+		return this;
+	}
+
+	/// <summary>
+	/// Registers a key provider for a specific request type.
+	/// </summary>
+	public CleverCacheOptions AddKeyProvider<TRequest, TProvider>()
+		where TProvider : class, ICacheKeyProvider<TRequest>
+	{
+		ComposeKeyProviderRegistration(services => services.TryAddSingleton<ICacheKeyProvider<TRequest>, TProvider>());
+		return this;
+	}
+
 	internal Action<IServiceCollection> StoreRegistration { get; private set; } = services =>
 	{
 		services.AddMemoryCache();
 		services.TryAddSingleton<ICleverCacheStore, MemoryCacheStore>();
 	};
+
+	internal Action<IServiceCollection> KeyProviderRegistration { get; private set; } = _ => { };
 
 	/// <summary>Uses the built-in <see cref="IMemoryCache"/> backend (default).</summary>
 	public CleverCacheOptions UseMemoryCache()
@@ -107,5 +152,15 @@ public class CleverCacheOptions(HashSet<DependentCache>? dependentCaches = null)
 	{
 		StoreRegistration = registration;
 		return this;
+	}
+
+	private void ComposeKeyProviderRegistration(Action<IServiceCollection> registration)
+	{
+		var current = KeyProviderRegistration;
+		KeyProviderRegistration = services =>
+		{
+			current(services);
+			registration(services);
+		};
 	}
 }

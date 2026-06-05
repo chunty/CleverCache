@@ -21,11 +21,18 @@ internal abstract class CacheEntryManager
 	/// <summary>
 	/// Associates key with each type and all of its transitive dependents.
 	/// </summary>
-	public void AddKeyToTypes(Type[] types, object key)
+	public virtual void AddKeyToTypes(Type[] types, object key)
 	{
-		var canonicalKey = CacheKeyIdentity.ToCanonicalKey(key);
+		ArgumentNullException.ThrowIfNull(key);
+
+		if (!TryResolveCanonicalKey(key, out var canonicalKey))
+			throw new InvalidOperationException("The supplied key could not be converted into a stable cache key.");
+
 		AddCanonicalKeyToTypes(types, canonicalKey);
 	}
+
+	protected virtual bool TryResolveCanonicalKey(object key, out string canonicalKey) =>
+		CacheKeyIdentity.TryToCanonicalKey(key, out canonicalKey);
 
 	protected void AddCanonicalKeyToTypes(Type[] types, string canonicalKey)
 	{

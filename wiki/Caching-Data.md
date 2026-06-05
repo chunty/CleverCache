@@ -17,6 +17,9 @@ public class OrderService(ICleverCache cache, AppDbContext db)
 
 When any `Order` is saved (created, updated, or deleted) via EF Core, the `"orders-all"` entry is automatically evicted. The same applies if a type that `Order` is registered as a dependent of is saved — for example, if `Customer` is configured to cascade to `Order`, saving a `Customer` will also evict `"orders-all"`.
 
+> [!WARNING]
+> ⚠️ **WARNING:** If you pass a complex object as the cache key, CleverCache will try to canonicalize it structurally. That is usually fine for simple request objects, but types with expressions, deferred iterators, or other unusual members can produce noisy keys. For those cases, use a type-specific cache key provider (see [Cache Key Providers](Cache-Key-Providers)). If CleverCache still cannot produce a stable key, it will log a warning and skip caching for that call.
+
 ## Multiple types
 
 If a cache entry contains data from more than one entity type, pass all relevant types — the entry will be evicted when *any* of them changes:

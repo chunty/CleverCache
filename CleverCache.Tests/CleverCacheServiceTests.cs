@@ -1,6 +1,9 @@
 using CleverCache.Implementations;
+using CleverCache.DependencyInjection;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using System.Linq.Expressions;
 
 namespace CleverCache.Tests;
 
@@ -297,18 +300,19 @@ public class CleverCacheServiceTests
     }
 
     [Fact]
-    public void GetDiagnostics_ComplexKey_IsProjectedToSerializableValue()
+    public void GetOrCreate_KeyWithDelegate_IsSkipped()
     {
         var sut = CreateService();
         Func<int> complexKey = () => 123;
+        var callCount = 0;
 
-        sut.GetOrCreate([typeof(string)], complexKey, () => 1);
+        var first = sut.GetOrCreate([typeof(string)], complexKey, () => { callCount++; return 1; });
+        var second = sut.GetOrCreate([typeof(string)], complexKey, () => { callCount++; return 2; });
 
-        var d = sut.GetDiagnostics();
-        var key = Assert.Single(d.KeysByType[typeof(string)]);
-
-        var keyText = Assert.IsType<string>(key);
-        Assert.False(string.IsNullOrWhiteSpace(keyText));
+        Assert.Equal(1, first);
+        Assert.Equal(2, second);
+        Assert.Equal(2, callCount);
+        Assert.Empty(sut.GetDiagnostics().KeysByType);
     }
 
     [Fact]
@@ -325,6 +329,92 @@ public class CleverCacheServiceTests
         Assert.Contains("DeferredNamesQuery", keyText);
         Assert.Contains("\"names\":[\"Size\",\"Color\"]", keyText);
         Assert.DoesNotContain("ListSelectIterator", keyText);
+    }
+
+    [Fact]
+    public void GetOrCreate_KeyWithExpressionProperty_IsSkipped()
+    {
+        var sut = CreateService();
+        Expression<Func<int, bool>> predicate = x => x > 10;
+        var key = new ExpressionQuery(predicate);
+        var callCount = 0;
+
+        var first = sut.GetOrCreate([typeof(string)], key, () => { callCount++; return 1; });
+        var second = sut.GetOrCreate([typeof(string)], key, () => { callCount++; return 2; });
+
+        Assert.Equal(1, first);
+        Assert.Equal(2, second);
+        Assert.Equal(2, callCount);
+        Assert.Empty(sut.GetDiagnostics().KeysByType);
+    }
+
+    [Fact]
+    public void GetDiagnostics_KeyWithCycle_DoesNotThrow()
+    {
+        var sut = CreateService();
+        var key = new CyclicQuery { Id = 1 };
+        key.Next = key;
+
+        var ex = Record.Exception(() => sut.GetOrCreate([typeof(string)], key, () => 1));
+
+        Assert.Null(ex);
+        var keyText = Assert.IsType<string>(Assert.Single(sut.GetDiagnostics().KeysByType[typeof(string)]));
+        Assert.Contains("\"id\":1", keyText);
+    }
+
+    [Fact]
+    public void GetOrCreate_WithKeyProvider_UsesProviderKey()
+    {
+        var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
+        services.AddCleverCache(o => o.AddKeyProvider<ProviderQuery, ProviderQueryKeyProvider>());
+        var provider = services.BuildServiceProvider();
+        var cache = provider.GetRequiredService<ICleverCache>();
+        var callCount = 0;
+
+        var first = cache.GetOrCreate(new[] { typeof(string) }, new ProviderQuery(1, 10), () => { callCount++; return 1; });
+        var second = cache.GetOrCreate(new[] { typeof(string) }, new ProviderQuery(1, 99), () => { callCount++; return 2; });
+
+        Assert.Equal(1, first);
+        Assert.Equal(1, second);
+        Assert.Equal(1, callCount);
+        var keyText = Assert.IsType<string>(Assert.Single(cache.GetDiagnostics().KeysByType[typeof(string)]));
+        Assert.Contains("ProviderQuery", keyText);
+        Assert.Contains("ProviderQueryKeyProvider", keyText);
+        Assert.DoesNotContain("ProviderCanonicalKey", keyText);
+    }
+
+    [Fact]
+    public void GetOrCreate_WithScannedKeyProvider_UsesProviderKey()
+    {
+        var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
+        services.AddCleverCache(o => o.ScanKeyProviderAssemblies<CleverCacheServiceTests>());
+        var provider = services.BuildServiceProvider();
+        var cache = provider.GetRequiredService<ICleverCache>();
+        var callCount = 0;
+
+        var first = cache.GetOrCreate(new[] { typeof(string) }, new ScannedProviderQuery(1, 10), () => { callCount++; return 1; });
+        var second = cache.GetOrCreate(new[] { typeof(string) }, new ScannedProviderQuery(1, 99), () => { callCount++; return 2; });
+
+        Assert.Equal(1, first);
+        Assert.Equal(1, second);
+        Assert.Equal(1, callCount);
+    }
+
+    [Fact]
+    public void GetOrCreate_WithNullKeyProvider_SkipsCaching()
+    {
+        var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
+        services.AddCleverCache(o => o.AddKeyProvider<NullProviderQuery, NullProviderQueryProvider>());
+        var provider = services.BuildServiceProvider();
+        var cache = provider.GetRequiredService<ICleverCache>();
+        var callCount = 0;
+
+        var first = cache.GetOrCreate(new[] { typeof(string) }, new NullProviderQuery(1), () => { callCount++; return 1; });
+        var second = cache.GetOrCreate(new[] { typeof(string) }, new NullProviderQuery(1), () => { callCount++; return 2; });
+
+        Assert.Equal(1, first);
+        Assert.Equal(2, second);
+        Assert.Equal(2, callCount);
     }
 
     [Fact]
@@ -400,6 +490,28 @@ public class CleverCacheServiceTests
     }
 
     private sealed record DeferredNamesQuery(IEnumerable<string> Names);
+    private sealed record ExpressionQuery(Expression<Func<int, bool>> Predicate);
+    private sealed class CyclicQuery
+    {
+        public int Id { get; init; }
+        public CyclicQuery? Next { get; set; }
+    }
+    private sealed record ProviderQuery(int Id, int Noise);
+    private sealed record ScannedProviderQuery(int Id, int Noise);
+    private sealed record NullProviderQuery(int Id);
+    private sealed record ProviderQueryKey(int Id);
+    private sealed class ProviderQueryKeyProvider : ICacheKeyProvider<ProviderQuery>
+    {
+        public object GetKey(ProviderQuery value) => new ProviderQueryKey(value.Id);
+    }
+    private sealed class ScannedProviderQueryKeyProvider : ICacheKeyProvider<ScannedProviderQuery>
+    {
+        public object GetKey(ScannedProviderQuery value) => new ProviderQueryKey(value.Id);
+    }
+    private sealed class NullProviderQueryProvider : ICacheKeyProvider<NullProviderQuery>
+    {
+        public object GetKey(NullProviderQuery value) => null!;
+    }
     private sealed class QueryKey
     {
         public QueryKey(int id, IEnumerable<string> names)

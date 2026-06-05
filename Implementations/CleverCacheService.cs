@@ -1,4 +1,7 @@
-﻿using AsyncKeyedLock;
+using System.Collections.Concurrent;
+using System.Reflection;
+using AsyncKeyedLock;
+using Microsoft.Extensions.Logging;
 
 namespace CleverCache.Implementations;
 
@@ -6,12 +9,21 @@ namespace CleverCache.Implementations;
 internal class CleverCacheService : CacheEntryManager, ICleverCache
 {
 	private readonly ICleverCacheStore _store;
+	private readonly IServiceProvider _serviceProvider;
+	private readonly ILogger<CleverCacheService>? _logger;
 	private readonly AsyncKeyedLocker<string> _locker = new();
 	private readonly bool _enableAsyncRaceConditionGuard;
+	private readonly ConcurrentDictionary<Type, Func<object, ProviderKeyResolution>?> _keyResolvers = new();
 
-	public CleverCacheService(ICleverCacheStore store, CleverCacheOptions options)
+	public CleverCacheService(
+		ICleverCacheStore store,
+		CleverCacheOptions options,
+		IServiceProvider? serviceProvider = null,
+		ILogger<CleverCacheService>? logger = null)
 	{
 		_store = store;
+		_serviceProvider = serviceProvider ?? NullServiceProvider.Instance;
+		_logger = logger;
 		_enableAsyncRaceConditionGuard = options.EnableAsyncRaceConditionGuard;
 		foreach (var dep in options.DependentCaches)
 			AddDependentCache(dep.Type, dep.DependentType);
@@ -22,7 +34,16 @@ internal class CleverCacheService : CacheEntryManager, ICleverCache
 
 	public TItem? GetOrCreate<TItem>(Type[] types, object key, Func<TItem> factory, CleverCacheEntryOptions? options = null)
 	{
-		var canonicalKey = CacheKeyIdentity.ToCanonicalKey(key);
+		ArgumentNullException.ThrowIfNull(key);
+
+		if (!TryResolveCanonicalKey(key, out var canonicalKey, out var warningReason))
+		{
+			_logger?.LogWarning(
+				"Skipping cache entry for {KeyType}: {Reason}",
+				key.GetType().FullName,
+				warningReason ?? "no stable cache key could be produced");
+			return factory();
+		}
 
 		TItem? CreateAndStore()
 		{
@@ -47,7 +68,16 @@ internal class CleverCacheService : CacheEntryManager, ICleverCache
 
 	public async Task<TItem?> GetOrCreateAsync<TItem>(Type[] types, object key, Func<Task<TItem>> factory, CleverCacheEntryOptions? options = null, CancellationToken cancellationToken = default)
 	{
-		var canonicalKey = CacheKeyIdentity.ToCanonicalKey(key);
+		ArgumentNullException.ThrowIfNull(key);
+
+		if (!TryResolveCanonicalKey(key, out var canonicalKey, out var warningReason))
+		{
+			_logger?.LogWarning(
+				"Skipping cache entry for {KeyType}: {Reason}",
+				key.GetType().FullName,
+				warningReason ?? "no stable cache key could be produced");
+			return await factory().ConfigureAwait(false);
+		}
 
 		async Task<TItem?> CreateAndStoreAsync()
 		{
@@ -92,10 +122,129 @@ internal class CleverCacheService : CacheEntryManager, ICleverCache
 
 	public void Remove(object key)
 	{
-		var canonicalKey = CacheKeyIdentity.ToCanonicalKey(key);
+		ArgumentNullException.ThrowIfNull(key);
+
+		if (!TryResolveCanonicalKey(key, out var canonicalKey, out var warningReason))
+		{
+			_logger?.LogWarning(
+				"Skipping cache removal for {KeyType}: {Reason}",
+				key.GetType().FullName,
+				warningReason ?? "no stable cache key could be produced");
+			return;
+		}
+
 		_store.Remove(canonicalKey);
 		RemoveKeyFromAllTypes(canonicalKey);
 	}
 
 	public CleverCacheDiagnostics GetDiagnostics() => SnapshotDiagnostics();
+
+	public override void AddKeyToTypes(Type[] types, object key)
+	{
+		if (!TryResolveCanonicalKey(key, out var canonicalKey, out var warningReason))
+		{
+			_logger?.LogWarning(
+				"Skipping cache key tracking for {KeyType}: {Reason}",
+				key.GetType().FullName,
+				warningReason ?? "no stable cache key could be produced");
+			return;
+		}
+
+		AddCanonicalKeyToTypes(types, canonicalKey);
+	}
+
+	protected override bool TryResolveCanonicalKey(object key, out string canonicalKey)
+		=> TryResolveCanonicalKey(key, out canonicalKey, out _);
+
+	private bool TryResolveCanonicalKey(object key, out string canonicalKey, out string? warningReason)
+	{
+		var resolvedKey = ResolveKeyValue(key, out var customTypeIdentity);
+		if (resolvedKey is null)
+		{
+			canonicalKey = string.Empty;
+			warningReason = null;
+			return false;
+		}
+
+		if (CacheKeyIdentity.TryGetUnsupportedKeyShapeReason(resolvedKey, out warningReason))
+		{
+			canonicalKey = string.Empty;
+			return false;
+		}
+
+		var success = customTypeIdentity is null
+			? CacheKeyIdentity.TryToCanonicalKey(resolvedKey, out canonicalKey)
+			: CacheKeyIdentity.TryToCanonicalKey(customTypeIdentity, resolvedKey, out canonicalKey);
+
+		if (!success)
+		{
+			warningReason = null;
+			return false;
+		}
+
+		warningReason = null;
+		return true;
+	}
+
+	private object? ResolveKeyValue(object key, out string? customTypeIdentity)
+	{
+		if (key is string)
+		{
+			customTypeIdentity = null;
+			return key;
+		}
+
+		var type = key.GetType();
+		var resolver = _keyResolvers.GetOrAdd(type, CreateResolver);
+		if (resolver is null)
+		{
+			customTypeIdentity = null;
+			return key;
+		}
+
+		var resolution = resolver(key);
+		if (resolution.KeyValue is null)
+		{
+			customTypeIdentity = null;
+			return null;
+		}
+
+		var sourceTypeIdentity = resolution.SourceType.FullName ?? resolution.SourceType.Name;
+		var providerTypeIdentity = resolution.ProviderType.FullName ?? resolution.ProviderType.Name;
+		customTypeIdentity = $"{sourceTypeIdentity} + {providerTypeIdentity}";
+		return resolution.KeyValue;
+	}
+
+	private Func<object, ProviderKeyResolution>? CreateResolver(Type type)
+	{
+		var providerType = typeof(ICacheKeyProvider<>).MakeGenericType(type);
+		var provider = _serviceProvider.GetService(providerType);
+		if (provider is null)
+			return null;
+
+		var method = typeof(CleverCacheService)
+			.GetMethod(nameof(CreateKeyResolver), BindingFlags.NonPublic | BindingFlags.Static)!
+			.MakeGenericMethod(type);
+
+		return (Func<object, ProviderKeyResolution>)method.Invoke(null, [provider])!;
+	}
+
+	private static Func<object, ProviderKeyResolution> CreateKeyResolver<T>(ICacheKeyProvider<T> provider)
+	{
+		return value => new ProviderKeyResolution(
+			provider.GetKey((T)value),
+			typeof(T),
+			provider.GetType());
+	}
+
+	private sealed record ProviderKeyResolution(object? KeyValue, Type SourceType, Type ProviderType);
+
+
+
+	private sealed class NullServiceProvider : IServiceProvider
+	{
+		public static readonly IServiceProvider Instance = new NullServiceProvider();
+
+		public object? GetService(Type serviceType) => null;
+	}
 }

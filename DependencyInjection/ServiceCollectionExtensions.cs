@@ -16,6 +16,7 @@ public static class ServiceCollectionExtensions
 
 		// Register chosen store (defaults to memory)
 		localOptions.StoreRegistration?.Invoke(services);
+		localOptions.KeyProviderRegistration?.Invoke(services);
 
 		// Register ICleverCache backed by the store
 		services.TryAddSingleton<ICleverCache, CleverCacheService>();
