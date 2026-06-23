@@ -34,7 +34,7 @@ var summary = await cache.GetOrCreateAsync<List<OrderSummary>>(
 
 ## Entry options
 
-All overloads accept an optional `CleverCacheEntryOptions`:
+All overloads accept an optional `CleverCacheEntryOptions`. If you do not pass one, CleverCache uses a 4 hour sliding expiration by default:
 
 ```csharp
 var options = new CleverCacheEntryOptions
@@ -56,7 +56,7 @@ var result = await cache.GetOrCreateAsync<Order, List<Order>>(
 );
 ```
 
-> **Sliding expiration** is only honoured by the memory cache provider. Distributed and Redis providers ignore it.
+The default can be changed globally by setting `CleverCacheOptions.DefaultEntryOptions` during `AddCleverCache(...)`.
 
 ## Manual removal
 

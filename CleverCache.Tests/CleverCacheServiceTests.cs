@@ -71,6 +71,69 @@ public class CleverCacheServiceTests
     }
 
     [Fact]
+    public void GetOrCreate_UsesDefaultFourHourSlidingExpiration()
+    {
+        var store = new CapturingStore();
+        var sut = CreateService(store);
+
+        sut.GetOrCreate([typeof(string)], "key1", () => "value");
+
+        Assert.NotNull(store.LastSetOptions);
+        Assert.Equal(TimeSpan.FromHours(4), store.LastSetOptions!.SlidingExpiration);
+        Assert.Null(store.LastSetOptions.AbsoluteExpiration);
+        Assert.Null(store.LastSetOptions.AbsoluteExpirationRelativeToNow);
+    }
+
+    [Fact]
+    public async Task GetOrCreateAsync_UsesConfiguredDefaultEntryOptions()
+    {
+        var store = new CapturingStore();
+        var options = new CleverCacheOptions
+        {
+            DefaultEntryOptions = new CleverCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(45)
+            }
+        };
+        var sut = CreateService(store, options);
+
+        await sut.GetOrCreateAsync([typeof(string)], "key1", async () =>
+        {
+            await Task.Yield();
+            return "value";
+        }, cancellationToken: TestContext.Current.CancellationToken);
+
+        Assert.NotNull(store.LastSetAsyncOptions);
+        Assert.Equal(TimeSpan.FromMinutes(45), store.LastSetAsyncOptions!.AbsoluteExpirationRelativeToNow);
+        Assert.Null(store.LastSetAsyncOptions.AbsoluteExpiration);
+        Assert.Null(store.LastSetAsyncOptions.SlidingExpiration);
+    }
+
+    [Fact]
+    public void GetOrCreate_PreservesExplicitEntryOptions()
+    {
+        var store = new CapturingStore();
+        var sut = CreateService(store, new CleverCacheOptions
+        {
+            DefaultEntryOptions = new CleverCacheEntryOptions
+            {
+                SlidingExpiration = TimeSpan.FromHours(4)
+            }
+        });
+        var explicitOptions = new CleverCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+        };
+
+        sut.GetOrCreate([typeof(string)], "key1", () => "value", explicitOptions);
+
+        Assert.Same(explicitOptions, store.LastSetOptions);
+        Assert.Equal(TimeSpan.FromMinutes(10), store.LastSetOptions!.AbsoluteExpirationRelativeToNow);
+        Assert.Null(store.LastSetOptions.AbsoluteExpiration);
+        Assert.Null(store.LastSetOptions.SlidingExpiration);
+    }
+
+    [Fact]
     public async Task GetOrCreate_ConcurrentRequestsSameKey_WithRaceConditionGuardEnabled_FactoryCalledOnce()
     {
         var sut = CreateService(options: new CleverCacheOptions { EnableAsyncRaceConditionGuard = true });
@@ -487,6 +550,39 @@ public class CleverCacheServiceTests
         var d = sut.GetDiagnostics();
         Assert.DoesNotContain("k1", d.KeysByType.GetValueOrDefault(typeof(string)) ?? []);
         Assert.DoesNotContain("k1", d.KeysByType.GetValueOrDefault(typeof(int)) ?? []); // must also clean up dependent type
+    }
+
+    private sealed class CapturingStore : ICleverCacheStore
+    {
+        public CleverCacheEntryOptions? LastSetOptions { get; private set; }
+        public CleverCacheEntryOptions? LastSetAsyncOptions { get; private set; }
+
+        public bool TryGet<TItem>(object key, out TItem? value)
+        {
+            value = default;
+            return false;
+        }
+
+        public Task<(bool Hit, TItem? Value)> TryGetAsync<TItem>(object key, CancellationToken cancellationToken = default)
+        {
+            var value = default(TItem);
+            return Task.FromResult((false, value));
+        }
+
+        public void Set<TItem>(object key, TItem value, CleverCacheEntryOptions? options = null)
+        {
+            LastSetOptions = options;
+        }
+
+        public Task SetAsync<TItem>(object key, TItem value, CleverCacheEntryOptions? options = null, CancellationToken cancellationToken = default)
+        {
+            LastSetAsyncOptions = options;
+            return Task.CompletedTask;
+        }
+
+        public void Remove(object key) { }
+
+        public Task RemoveAsync(object key, CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 
     private sealed record DeferredNamesQuery(IEnumerable<string> Names);

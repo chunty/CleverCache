@@ -1,3 +1,4 @@
+using CleverCache.Models;
 using System.Reflection;
 using MediatR;
 
@@ -18,10 +19,12 @@ internal class AutoCacheBehaviour<TRequest, TResponse>(ICleverCache cache)
 			return await next(cancellationToken);
 		}
 
+		var createOptions = BuildOptions(attribute);
 		var result = await cache.GetOrCreateAsync(
 			attribute.Types,
 			request,
 			() => next(cancellationToken),
+			createOptions,
 			cancellationToken: cancellationToken
 		);
 
@@ -29,5 +32,25 @@ internal class AutoCacheBehaviour<TRequest, TResponse>(ICleverCache cache)
 		// but the handler is responsible for its own return value — if it legitimately returns null,
 		// propagate that rather than re-executing the handler.
 		return result ?? default!;
+	}
+
+	private static CleverCacheEntryOptions? BuildOptions(AutoCacheAttribute attribute)
+	{
+		if (attribute.SlidingExpirationSeconds <= 0 && attribute.AbsoluteExpirationSeconds <= 0)
+			return null;
+
+		var options = new CleverCacheEntryOptions();
+
+		if (attribute.SlidingExpirationSeconds > 0)
+		{
+			options.SlidingExpiration = TimeSpan.FromSeconds(attribute.SlidingExpirationSeconds);
+		}
+
+		if (attribute.AbsoluteExpirationSeconds > 0)
+		{
+			options.AbsoluteExpiration = DateTimeOffset.UtcNow.AddSeconds(attribute.AbsoluteExpirationSeconds);
+		}
+
+		return options;
 	}
 }

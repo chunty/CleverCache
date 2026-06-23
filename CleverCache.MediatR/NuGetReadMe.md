@@ -23,3 +23,5 @@ public record DeleteMyCommand(int Id) : IRequest;
 ```
 
 Cache is cleared after the command handler completes successfully. A failed handler leaves the cache untouched.
+
+`[AutoCache]` entries default to a 4 hour sliding expiration. Override a specific query with `SlidingExpirationSeconds` or `AbsoluteExpirationSeconds`, or change the global default via `CleverCacheOptions.DefaultEntryOptions`.

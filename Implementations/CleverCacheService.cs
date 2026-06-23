@@ -14,6 +14,7 @@ internal class CleverCacheService : CacheEntryManager, ICleverCache
 	private readonly AsyncKeyedLocker<string> _locker = new();
 	private readonly bool _enableAsyncRaceConditionGuard;
 	private readonly ConcurrentDictionary<Type, Func<object, ProviderKeyResolution>?> _keyResolvers = new();
+	private readonly CleverCacheEntryOptions _defaultEntryOptions;
 
 	public CleverCacheService(
 		ICleverCacheStore store,
@@ -25,6 +26,10 @@ internal class CleverCacheService : CacheEntryManager, ICleverCache
 		_serviceProvider = serviceProvider ?? NullServiceProvider.Instance;
 		_logger = logger;
 		_enableAsyncRaceConditionGuard = options.EnableAsyncRaceConditionGuard;
+		_defaultEntryOptions = CloneOptions(options.DefaultEntryOptions ?? new CleverCacheEntryOptions
+		{
+			SlidingExpiration = TimeSpan.FromHours(4)
+		});
 		foreach (var dep in options.DependentCaches)
 			AddDependentCache(dep.Type, dep.DependentType);
 
@@ -49,7 +54,7 @@ internal class CleverCacheService : CacheEntryManager, ICleverCache
 		{
 			AddCanonicalKeyToTypes(types, canonicalKey);
 			var value = factory();
-			_store.Set(canonicalKey, value, options);
+			_store.Set(canonicalKey, value, ResolveCreateOptions(options));
 			return value;
 		}
 
@@ -83,7 +88,7 @@ internal class CleverCacheService : CacheEntryManager, ICleverCache
 		{
 			AddCanonicalKeyToTypes(types, canonicalKey);
 			var value = await factory().ConfigureAwait(false);
-			await _store.SetAsync(canonicalKey, value, options, cancellationToken).ConfigureAwait(false);
+			await _store.SetAsync(canonicalKey, value, ResolveCreateOptions(options), cancellationToken).ConfigureAwait(false);
 			return value;
 		}
 
@@ -228,6 +233,27 @@ internal class CleverCacheService : CacheEntryManager, ICleverCache
 
 		return (Func<object, ProviderKeyResolution>)method.Invoke(null, [provider])!;
 	}
+
+	private CleverCacheEntryOptions ResolveCreateOptions(CleverCacheEntryOptions? options)
+	{
+		return HasExplicitExpiration(options) ? 
+			options! : 
+			CloneOptions(_defaultEntryOptions);
+	}
+
+	private static bool HasExplicitExpiration(CleverCacheEntryOptions? options) =>
+		options is not null &&
+		(options.AbsoluteExpiration is not null ||
+		 options.AbsoluteExpirationRelativeToNow is not null ||
+		 options.SlidingExpiration is not null);
+
+	private static CleverCacheEntryOptions CloneOptions(CleverCacheEntryOptions options) =>
+		new()
+		{
+			AbsoluteExpiration = options.AbsoluteExpiration,
+			AbsoluteExpirationRelativeToNow = options.AbsoluteExpirationRelativeToNow,
+			SlidingExpiration = options.SlidingExpiration
+		};
 
 	private static Func<object, ProviderKeyResolution> CreateKeyResolver<T>(ICacheKeyProvider<T> provider)
 	{

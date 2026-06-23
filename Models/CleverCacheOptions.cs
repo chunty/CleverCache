@@ -19,6 +19,15 @@ public class CleverCacheOptions(HashSet<DependentCache>? dependentCaches = null)
 	public bool EnableAsyncRaceConditionGuard { get; set; } = false;
 
 	/// <summary>
+	/// The default cache entry lifetime applied when callers do not provide explicit entry options.
+	/// The default is a 4 hour sliding expiration.
+	/// </summary>
+	public CleverCacheEntryOptions DefaultEntryOptions { get; set; } = new()
+	{
+		SlidingExpiration = TimeSpan.FromHours(4)
+	};
+
+	/// <summary>
 	/// Scans the assembly containing <typeparamref name="T"/> for <see cref="DependentCachesAttribute"/>
 	/// and registers the declared cache dependency relationships.
 	/// Use this instead of relying on <c>UseCleverCache&lt;TContext&gt;()</c> for attribute-based configuration.

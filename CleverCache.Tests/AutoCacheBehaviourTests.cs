@@ -7,6 +7,12 @@ namespace CleverCache.Tests;
 [AutoCache([typeof(CachedEntity)])]
 file record CachedQuery(int Id) : IRequest<string>;
 
+[AutoCache([typeof(CachedEntity)], SlidingExpirationSeconds = 1800)]
+file record SlidingCachedQuery(int Id) : IRequest<string>;
+
+[AutoCache([typeof(CachedEntity)], AbsoluteExpirationSeconds = 1800)]
+file record AbsoluteCachedQuery(int Id) : IRequest<string>;
+
 file record UncachedQuery(int Id) : IRequest<string>;
 
 file class CachedEntity;
@@ -86,5 +92,53 @@ public class AutoCacheBehaviourTests
 
         Assert.Null(result);
         Assert.Equal(1, callCount); // handler must only execute once even when result is null
+    }
+
+    [Fact]
+    public async Task Handle_WithAttribute_SlidingExpiration_UsesAttributeValue()
+    {
+        var cacheMock = new Mock<ICleverCache>();
+        CleverCacheEntryOptions? capturedOptions = null;
+        cacheMock
+            .Setup(c => c.GetOrCreateAsync(
+                It.IsAny<Type[]>(), It.IsAny<object>(), It.IsAny<Func<Task<string>>>(), It.IsAny<CleverCacheEntryOptions>(), It.IsAny<CancellationToken>()))
+            .Returns<Type[], object, Func<Task<string>>, CleverCacheEntryOptions?, CancellationToken>((_, _, factory, options, _) =>
+            {
+                capturedOptions = options;
+                return factory().ContinueWith(task => (string?)task.Result, TaskScheduler.Default);
+            });
+
+        var sut = new AutoCacheBehaviour<SlidingCachedQuery, string>(cacheMock.Object);
+
+        await sut.Handle(new SlidingCachedQuery(1), _ => Task.FromResult("fresh"), CancellationToken.None);
+
+        Assert.NotNull(capturedOptions);
+        Assert.Equal(TimeSpan.FromMinutes(30), capturedOptions!.SlidingExpiration);
+        Assert.Null(capturedOptions.AbsoluteExpiration);
+    }
+
+    [Fact]
+    public async Task Handle_WithAttribute_AbsoluteExpiration_UsesAttributeValue()
+    {
+        var cacheMock = new Mock<ICleverCache>();
+        CleverCacheEntryOptions? capturedOptions = null;
+        cacheMock
+            .Setup(c => c.GetOrCreateAsync(
+                It.IsAny<Type[]>(), It.IsAny<object>(), It.IsAny<Func<Task<string>>>(), It.IsAny<CleverCacheEntryOptions>(), It.IsAny<CancellationToken>()))
+            .Returns<Type[], object, Func<Task<string>>, CleverCacheEntryOptions?, CancellationToken>((_, _, factory, options, _) =>
+            {
+                capturedOptions = options;
+                return factory().ContinueWith(task => (string?)task.Result, TaskScheduler.Default);
+            });
+
+        var sut = new AutoCacheBehaviour<AbsoluteCachedQuery, string>(cacheMock.Object);
+
+        await sut.Handle(new AbsoluteCachedQuery(1), _ => Task.FromResult("fresh"), CancellationToken.None);
+
+        Assert.NotNull(capturedOptions);
+        Assert.NotNull(capturedOptions!.AbsoluteExpiration);
+        Assert.True(capturedOptions.AbsoluteExpiration > DateTimeOffset.UtcNow.AddMinutes(29));
+        Assert.True(capturedOptions.AbsoluteExpiration < DateTimeOffset.UtcNow.AddMinutes(31));
+        Assert.Null(capturedOptions.SlidingExpiration);
     }
 }

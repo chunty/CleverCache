@@ -19,3 +19,5 @@ builder.Services.AddCleverCache(o => o.UseDistributedCache());
 // Custom provider
 builder.Services.AddCleverCache(o => o.UseCustomStore<MyStore>());
 ```
+
+Cache entries default to a 4 hour sliding expiration. Change the global default with `CleverCacheOptions.DefaultEntryOptions`, or override an individual MediatR query with `[AutoCache(...)]` expiration properties.

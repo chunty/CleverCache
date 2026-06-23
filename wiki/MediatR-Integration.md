@@ -36,6 +36,8 @@ No changes to the handler — caching is handled entirely by the pipeline behavi
 
 When any `Order` is saved via EF Core, all `GetOrdersQuery` cache entries are automatically evicted.
 
+If you do not specify an expiration on `[AutoCache]`, the entry uses the global CleverCache default: a 4 hour sliding expiration. You can change that global default in `AddCleverCache(...)` by setting `DefaultEntryOptions`.
+
 > [!WARNING]
 > ⚠️ **WARNING:** The request object is used as the cache key by default. That works well for simple request records, but complex members such as expressions or deferred enumerables can produce awkward keys. If a query needs a custom shape, add a type-specific cache key provider instead of relying on the default object form (see [Cache Key Providers](Cache-Key-Providers)). If CleverCache still cannot produce a stable key, it will log a warning and skip caching for that request.
 
@@ -54,6 +56,8 @@ The cache entry is evicted when *either* type changes.
 [AutoCache([typeof(Order)], AbsoluteExpirationSeconds = 300)]
 public record GetOrdersQuery(int CustomerId) : IRequest<List<Order>>;
 ```
+
+`[AutoCache]` supports both `SlidingExpirationSeconds` and `AbsoluteExpirationSeconds`. You can set either or both, and they map directly onto `CleverCacheEntryOptions`.
 
 ### Respects registered dependencies
 
