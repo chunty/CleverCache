@@ -35,6 +35,10 @@ public interface ICleverCache
 	/// <param name="factory">The factory that creates the value associated with this key if the key does not exist in the cache.</param>
 	/// <param name="createOptions">The options to be applied to the cache entry if the key does not exist in the cache.</param>
 	/// <returns>The value associated with this key.</returns>
+	/// <remarks>
+	/// If invalidation occurs while the factory runs, its result is returned to that caller but is not cached.
+	/// Invalidation does not wait for query factories; publication and removal coordinate per key.
+	/// </remarks>
 	TItem? GetOrCreate<TItem>(
 		Type[] types,
 		object key,
@@ -51,6 +55,11 @@ public interface ICleverCache
 	/// <param name="factory">The factory task that creates the value associated with this key if the key does not exist in the cache.</param>
 	/// <param name="createOptions">The options to be applied to the cache entry if the key does not exist in the cache.</param>
 	/// <returns>The task object representing the asynchronous operation.</returns>
+	/// <remarks>
+	/// If invalidation occurs while the factory runs, its result is returned to that caller but is not cached.
+	/// Invalidation does not wait for query factories. Store writes and removals for a key are coordinated,
+	/// including asynchronous store operations, without blocking operations on unrelated keys.
+	/// </remarks>
 	Task<TItem?> GetOrCreateAsync<TItem>(
 		Type[] types,
 		object key,
