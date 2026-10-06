@@ -101,7 +101,11 @@ public class MyStore : ICleverCacheStore, IEvictionNotifyingStore
 
 When `CleverCacheService` detects that your store implements `IEvictionNotifyingStore` at startup, it registers itself as the eviction listener automatically — no additional configuration needed.
 
-If your backing store has no eviction notification API (as is the case with `IDistributedCache`), simply omit `IEvictionNotifyingStore`. Tracked keys are still cleaned up on explicit `Remove`/`RemoveByType` calls; only naturally-expired entries may linger briefly in the in-memory tracking set.
+Eviction notifications can arrive after a replacement has been stored under the same key, or during a new fill. CleverCache treats them as hints: it checks for a current entry before removing tracking, and defers that check while fills are active. Notifying stores must support `TryGet<object>` as an existence check, including returning a hit for cached null values. Both synchronous and delayed notifications are supported.
+
+If your backing store has no eviction notification API (as is the case with `IDistributedCache`), simply omit `IEvictionNotifyingStore`. Tracked keys and their coordination state are still cleaned up on successful explicit `Remove`/`RemoveByType` calls; naturally-expired entries can remain registered until such a removal.
+
+All providers use a process-local type/key index. Sharing Redis or another distributed backend does not by itself broadcast invalidation between CleverCache instances.
 
 ### Example — dictionary-backed store
 

@@ -44,3 +44,27 @@ cacheMock.Verify(c => c.GetOrCreateAsync(...), Times.Once);
 If you are *only* using MediatR automatic caching via `[AutoCache]` and never injecting `ICleverCache` directly into your services, you don't need `FakeCache` at all — the `AutoCacheBehaviour` pipeline behaviour is never part of your unit test boundary.
 
 For integration tests that exercise the full MediatR pipeline, register `FakeCache` or an in-memory store in your test service collection.
+
+## Invalidation regression tests and performance measurements
+
+`CacheInvalidationRaceTests` uses explicit gates to reproduce invalidation during query execution/store publication and delayed eviction after replacement. Tests cover both stampede-guard settings and assert fresh subsequent reads, rather than asserting the presence of the bug.
+
+Run the regressions:
+
+```powershell
+dotnet test .\CleverCache.Tests\CleverCache.Tests.csproj -f net10.0 --filter "FullyQualifiedName~CacheInvalidationRaceTests"
+```
+
+`PaymentCacheIntegrationTests` exercises separate detail/list cache keys through the MediatR caching behaviour and actual EF save interception, with memory and distributed-memory stores.
+
+Run the Release-mode measurement harness:
+
+```powershell
+dotnet run --project .\CleverCache.Benchmarks\CleverCache.Benchmarks.csproj -c Release -f net10.0
+# Limit measured scenarios, for example to hot hits:
+dotnet run --project .\CleverCache.Benchmarks\CleverCache.Benchmarks.csproj -c Release -f net10.0 -- hit
+```
+
+The harness reports nine timed samples per throughput scenario, median/slowest sample nanoseconds per operation and process-wide allocations. The separate mixed execution-latency scenario reports per-operation p95/p99 (excluding scheduler queueing). Compare repeated runs on the same idle machine; this lightweight harness is not a production load-test or a substitute for controlled benchmarking.
+
+The memory-cache invalidation baseline can appear artificially fast when the broken implementation has lost its tracking and skips removals. The `type-invalidate-refill-32-no-notifications` scenario uses a dictionary store without callbacks to compare real removal/refill work on both implementations.

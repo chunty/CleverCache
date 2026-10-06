@@ -15,6 +15,11 @@ public interface IEvictionNotifyingStore
 	/// <summary>
 	/// Registers a callback to be invoked when a cache entry is evicted.
 	/// </summary>
+	/// <remarks>
+	/// Notifications may be delayed or delivered synchronously. CleverCache checks whether the key
+	/// still exists before removing its tracking, so eviction of an old entry cannot untrack a replacement.
+	/// Notifying stores must support <c>TryGet&lt;object&gt;</c> for this existence check, including cached nulls.
+	/// </remarks>
 	/// <param name="onEvicted">Called with the evicted key.</param>
 	void RegisterEvictionCallback(Action<object> onEvicted);
 }

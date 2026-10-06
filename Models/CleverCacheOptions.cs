@@ -13,8 +13,8 @@ public class CleverCacheOptions(HashSet<DependentCache>? dependentCaches = null)
 	public HashSet<DependentCache> DependentCaches { get; set; } = dependentCaches ?? [];
 
 	/// <summary>
-	/// Enables the async post-lock cache re-check in <c>GetOrCreateAsync</c> to prevent duplicate factory execution
-	/// when multiple callers race on the same key.
+	/// Serializes factory execution for the same key in <c>GetOrCreate</c> and <c>GetOrCreateAsync</c>
+	/// to prevent cache stampedes. Invalidation correctness is enforced independently of this setting.
 	/// </summary>
 	public bool EnableAsyncRaceConditionGuard { get; set; } = false;
 

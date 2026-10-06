@@ -73,3 +73,15 @@ cache.RemoveByType<Order>();
 // or
 cache.RemoveByType(typeof(Order));
 ```
+
+## Concurrent fills and invalidation
+
+Invalidation prevents a factory already running for a tracked key from publishing its pre-invalidation result. The original caller can still receive that result; CleverCache does not retry the query. A subsequent cache miss runs a new factory.
+
+This applies to both synchronous and asynchronous APIs, whether `EnableAsyncRaceConditionGuard` is enabled or disabled. That option only controls whether competing same-key misses share one factory execution.
+
+Cache hits do not acquire invalidation locks. Publication and removal are coordinated per key, including asynchronous store writes. Invalidation never waits for the query factory, although it can wait for a store operation already publishing that key. Operations on unrelated keys remain independent.
+
+Tracked registrations are retained until an invalidated in-flight fill finishes, so diagnostics can temporarily include a pending key without a stored value. Failed factories clean up unused registrations. If a store write reports an error, registrations are conservatively retained because the store may have written before throwing; the exception propagates and a subsequent successful removal clears the registrations.
+
+These guarantees apply within one CleverCache instance. They do not provide cross-server invalidation or defer EF invalidation until an outer transaction commits.
