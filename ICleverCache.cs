@@ -3,13 +3,13 @@
 public interface ICleverCache
 {
 	/// <summary>
-	/// Registers a cascade rule: when all entries of <paramref name="type"/> are invalidated,
-	/// all entries of <paramref name="dependentType"/> are also invalidated.
-	/// Cascades are transitive and cycle-safe.
+	/// Registers that cached data for <paramref name="type"/> depends on <paramref name="dependentType"/>.
+	/// Invalidating <paramref name="dependentType"/> also invalidates cache entries for <paramref name="type"/>.
+	/// Dependencies are transitive and cycle-safe.
 	/// </summary>
 	/// <remarks>
-	/// This is normally configured automatically via the <c>[DependentCaches]</c> attribute and
-	/// <c>app.UseCleverCache&lt;TContext&gt;()</c>. Call this directly only when you need to set
+	/// This is normally configured automatically via the <c>[CacheInvalidatedBy]</c> attribute and
+	/// <c>ScanAssemblyContaining&lt;T&gt;()</c>. Call this directly only when you need to set
 	/// up cache dependencies programmatically rather than via the attribute.
 	/// </remarks>
 	void AddDependentCache(Type type, Type dependentType);
@@ -81,14 +81,14 @@ public interface ICleverCache
 
 	/// <summary>
 	/// Removes all cache entries associated with the specified entity type, including entries
-	/// registered under any dependent types (see <see cref="AddDependentCache"/>).
+	/// for types whose cached data depends on it (see <see cref="AddDependentCache"/>).
 	/// </summary>
 	/// <param name="type">The entity type whose cache entries should be evicted.</param>
 	void RemoveByType(Type type);
 
 	/// <summary>
 	/// Asynchronously removes all cache entries associated with the specified entity type,
-	/// including entries registered under any dependent types (see <see cref="AddDependentCache"/>).
+	/// including entries for types whose cached data depends on it (see <see cref="AddDependentCache"/>).
 	/// Prefer this over <see cref="RemoveByType"/> when using a distributed cache backend.
 	/// </summary>
 	/// <param name="type">The entity type whose cache entries should be evicted.</param>

@@ -10,14 +10,14 @@ Returns a `CleverCacheDiagnostics` record with two properties:
 
 | Property | Type | Description |
 |---|---|---|
-| `Dependants` | `IReadOnlyDictionary<Type, IReadOnlyList<Type>>` | Direct cascade edges — the types that will also be invalidated when a given type changes |
+| `Dependants` | `IReadOnlyDictionary<Type, IReadOnlyList<Type>>` | Direct dependency edges — each key type's cached data depends on its listed types; changing a listed type invalidates caches for the key type |
 | `KeysByType` | `IReadOnlyDictionary<Type, IReadOnlyList<object>>` | All cache keys currently tracked under each type, including keys inherited via cascade expansion |
 
 ```csharp
 var diagnostics = cache.GetDiagnostics();
 
-// Which types does invalidating Order cascade to?
-var cascades = diagnostics.Dependants[typeof(Order)];
+// Which types does cached Order data depend on?
+var dependencies = diagnostics.Dependants[typeof(Order)];
 
 // Which keys are currently tracked under Order?
 var keys = diagnostics.KeysByType[typeof(Order)];
@@ -38,6 +38,8 @@ app.MapGet("/_cache/tree", (ICleverCache cache) => cache.RenderDependencyTree())
 ```
 
 Example output:
+
+The renderer labels graph edges as `cascades to`. These are dependency/key-registration edges, not the direction of invalidation: `Order` listing `OrderLine` means changing `OrderLine` invalidates `Order` caches.
 
 ```
 CleverCache Dependency Tree

@@ -12,10 +12,14 @@ namespace CleverCache.Mediatr;
 /// public record GetOrdersQuery(int CustomerId) : IRequest&lt;List&lt;Order&gt;&gt;;
 /// </code>
 /// </example>
-public class AutoCacheAttribute(params Type[] types) : Attribute
+public class AutoCacheAttribute(params Type[] invalidatedBy) : Attribute
 {
-	/// <summary>The entity types this cache entry is associated with. The entry is evicted when any of these types is invalidated.</summary>
-	public Type[] Types { get; } = types;
+	/// <summary>The types whose invalidation evicts this query's cached result, including registered dependency cascades. These are not the query's result types.</summary>
+	public Type[] InvalidatedBy { get; } = invalidatedBy;
+
+	/// <summary>Compatibility alias for <see cref="InvalidatedBy"/>.</summary>
+	[Obsolete("Use InvalidatedBy instead. Cache invalidation behavior is unchanged.")]
+	public Type[] Types => InvalidatedBy;
 
 	/// <summary>Optional sliding expiration in seconds for this request key.</summary>
 	public int SlidingExpirationSeconds { get; set; } = -1;

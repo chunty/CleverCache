@@ -3,29 +3,28 @@
 /// <summary>
 /// Declares cache dependency relationships for an entity type.
 /// Use <c>builder.Services.AddCleverCache(o => o.ScanAssemblyContaining&lt;T&gt;())</c> to register
-/// these at startup. When any entry for this type is invalidated, entries for all declared
-/// dependent types are also invalidated.
+/// these at startup. Cached data for the decorated entity depends on the listed types:
+/// invalidating any listed type also invalidates cache entries for the decorated entity.
 /// </summary>
 /// <example>
 /// <code>
-/// // Invalidating Order also invalidates OrderLine and OrderNote
+/// // Order caches depend on OrderLine and OrderNote.
+/// // Invalidating either listed type also invalidates Order caches.
 /// [DependentCaches([typeof(OrderLine), typeof(OrderNote)])]
 /// public class Order { }
 ///
-/// // reverse: true also invalidates Order when OrderLine changes
+/// // reverse: true also invalidates OrderLine caches when Order changes.
+/// // Declare this on one entity instead of adding matching attributes to both.
 /// [DependentCaches([typeof(OrderLine)], reverse: true)]
 /// public class Order { }
 /// </code>
 /// </example>
 [AttributeUsage(AttributeTargets.Class)]
-public class DependentCachesAttribute(
-	Type[] types,
-	bool reverse = false
-) : Attribute
+//[Obsolete("Use CacheInvalidatedByAttribute instead. Dependency behavior is unchanged.")]
+public class DependentCachesAttribute : CacheInvalidatedByAttribute
 {
-	/// <summary>The entity types that should also be invalidated when this type's entries are evicted.</summary>
-	public Type[] DependentTypes { get; } = types ?? [];
-
-	/// <summary>When <c>true</c>, also registers the inverse dependency so that invalidating any dependent type also invalidates this type.</summary>
-	public bool Reverse { get; set; } = reverse;
+	public DependentCachesAttribute(Type[] types, bool reverse = false) : base(types)
+	{
+		Reverse = reverse;
+	}
 }

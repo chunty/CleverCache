@@ -76,7 +76,7 @@ public class OrderSyncService(ICleverCache cache)
 }
 ```
 
-`RemoveByType` understands the full dependency tree, so if `Order` is configured to cascade to `OrderLine` and `OrderNote`, a single call handles all three. You can also pass multiple types:
+`RemoveByType` understands the full dependency tree. For example, if `OrderLine` and `OrderNote` each declare `[CacheInvalidatedBy(typeof(Order))]`, invalidating `Order` also clears their caches because they depend on `Order`. A declaration on `Order` listing `OrderLine` would mean the opposite direction. You can also invalidate multiple types explicitly:
 
 ```csharp
 cache.RemoveByType<Order>();
@@ -88,7 +88,7 @@ Or build a helper that mirrors what `[InvalidatesCache]` does — invalidate a s
 ```csharp
 private void InvalidateOrderCaches()
 {
-    cache.RemoveByType<Order>();   // cascades to OrderLine, OrderNote automatically
+    cache.RemoveByType<Order>();   // Also clears caches for types that depend on Order.
 }
 ```
 

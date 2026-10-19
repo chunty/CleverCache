@@ -48,7 +48,9 @@ If you do not specify an expiration on `[AutoCache]`, the entry uses the global 
 public record GetOrderSummaryQuery(int OrderId) : IRequest<OrderSummary>;
 ```
 
-The cache entry is evicted when *either* type changes.
+The `invalidatedBy` constructor parameter and `InvalidatedBy` property identify the types whose invalidation evicts the cached result, not the types returned by the query. The cache entry is evicted when *either* type is invalidated, including through registered dependency cascades.
+
+Positional attribute usage is unchanged. Code using the old named constructor argument `types:` must use `invalidatedBy:` instead. The old `Types` property remains available as an obsolete alias for `InvalidatedBy`.
 
 ### Entry options
 
@@ -61,19 +63,22 @@ public record GetOrdersQuery(int CustomerId) : IRequest<List<Order>>;
 
 ### Respects registered dependencies
 
-`[AutoCache]` and `[InvalidatesCache]` both work through the same dependency tree as the rest of CleverCache. If you have `[DependentCaches]` configured (or cascades registered via `ScanAssemblyContaining`), you only need to reference the root type — dependents are handled automatically.
+`[AutoCache]` and `[InvalidatesCache]` both work through the same dependency tree as the rest of CleverCache. `[AutoCache]` identifies the types whose invalidation clears a query's cached result; `[InvalidatesCache]` identifies the types a command invalidates. Entity `[CacheInvalidatedBy]` declarations extend which changes invalidate those query results.
 
-For example, if `Order` is configured to cascade to `OrderLine` and `OrderNote`, this is sufficient:
+For example, declare that `Order` caches depend on `OrderLine` and `OrderNote`, and register the entity assembly through `ScanAssemblyContaining<Order>()`:
 
 ```csharp
+[CacheInvalidatedBy(typeof(OrderLine), typeof(OrderNote))]
+public class Order { }
+
 [AutoCache([typeof(Order)])]
 public record GetOrdersQuery(int CustomerId) : IRequest<List<Order>>;
 
-[InvalidatesCache(typeof(Order))]
-public record DeleteOrderCommand(int OrderId) : IRequest;
+[InvalidatesCache(typeof(OrderLine))]
+public record DeleteOrderLineCommand(int OrderLineId) : IRequest;
 ```
 
-You do not need to list `OrderLine` or `OrderNote` — invalidating `Order` cascades to them automatically.
+Invalidating `OrderLine` also evicts `GetOrdersQuery` entries because `Order` depends on `OrderLine`. You do not need to repeat the entity's dependencies on `[AutoCache]`. Invalidating `Order` alone does not evict caches for `OrderLine` or `OrderNote` unless the reverse relationships are also registered (for example with `Reverse = true`).
 
 ---
 
@@ -86,7 +91,7 @@ public record DeleteOrderCommand(int OrderId) : IRequest;
 
 - Cache is only cleared if the handler **completes without throwing** — a failed command leaves the cache untouched.
 - Works with any return type (`IRequest`, `IRequest<T>`, etc.).
-- Types are cleared in the order declared; each call to `RemoveByType` also cascades to dependent types (see [Dependent Caches](Dependent-Caches)).
+- Types are cleared in the order declared; each call to `RemoveByType` also evicts caches whose types depend on the invalidated type (see [Dependent Caches](Dependent-Caches)).
 
 ### Combined with `[AutoCache]`
 

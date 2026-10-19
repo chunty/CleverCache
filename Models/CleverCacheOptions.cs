@@ -28,7 +28,7 @@ public class CleverCacheOptions(HashSet<DependentCache>? dependentCaches = null)
 	};
 
 	/// <summary>
-	/// Scans the assembly containing <typeparamref name="T"/> for <see cref="DependentCachesAttribute"/>
+	/// Scans the assembly containing <typeparamref name="T"/> for <see cref="CacheInvalidatedByAttribute"/>
 	/// and registers the declared cache dependency relationships.
 	/// Use this instead of relying on <c>UseCleverCache&lt;TContext&gt;()</c> for attribute-based configuration.
 	/// </summary>
@@ -40,8 +40,8 @@ public class CleverCacheOptions(HashSet<DependentCache>? dependentCaches = null)
 	public CleverCacheOptions ScanAssemblyContaining<T>() => ScanAssemblies(typeof(T).Assembly);
 
 	/// <summary>
-	/// Scans the specified assemblies for <see cref="DependentCachesAttribute"/> and registers
-	/// the declared cache dependency relationships.
+	/// Scans the specified assemblies for <see cref="CacheInvalidatedByAttribute"/> and registers
+	/// the declared cache dependency relationships. The obsolete DependentCaches attribute remains supported.
 	/// </summary>
 	public CleverCacheOptions ScanAssemblies(params Assembly[] assemblies)
 	{
@@ -49,14 +49,14 @@ public class CleverCacheOptions(HashSet<DependentCache>? dependentCaches = null)
 		{
 			foreach (var type in assembly.GetTypes())
 			{
-				var attr = type.GetCustomAttribute<DependentCachesAttribute>();
-				if (attr is null) continue;
-
-				foreach (var depType in attr.DependentTypes)
+				foreach (var attr in type.GetCustomAttributes<CacheInvalidatedByAttribute>())
 				{
-					DependentCaches.Add(new DependentCache(type, depType));
-					if (attr.Reverse)
-						DependentCaches.Add(new DependentCache(depType, type));
+					foreach (var depType in attr.DependentTypes)
+					{
+						DependentCaches.Add(new DependentCache(type, depType));
+						if (attr.Reverse)
+							DependentCaches.Add(new DependentCache(depType, type));
+					}
 				}
 			}
 		}
