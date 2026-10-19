@@ -20,7 +20,7 @@
 /// </code>
 /// </example>
 [AttributeUsage(AttributeTargets.Class)]
-//[Obsolete("Use CacheInvalidatedByAttribute instead. Dependency behavior is unchanged.")]
+[Obsolete("Use CacheInvalidatedByAttribute instead. Dependency behavior is unchanged.")]
 public class DependentCachesAttribute : CacheInvalidatedByAttribute
 {
 	public DependentCachesAttribute(Type[] types, bool reverse = false) : base(types)
