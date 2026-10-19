@@ -22,7 +22,7 @@ CleverCache can be used with or without EF Core:
 | Automatic invalidation on `SaveChanges` | `AddCleverCacheEntityFramework` |
 | Automatic cascade discovery from navigation properties | `AddCleverCacheEntityFramework` + `ScanDbSetsForCacheDependencies` |
 
-> **Without the interceptor** you only get dependency tree management — you can define cascade rules with `[DependentCaches]` or `AddDependentCache`, and call `RemoveByType<T>()` yourself to invalidate. Cache entries are never evicted automatically; you are responsible for triggering invalidation. The interceptor is what makes CleverCache hands-off.
+> **Without the interceptor** you only get dependency tree management — you can define dependency rules with `[CacheInvalidatedBy]` or `AddDependentCache`, and call `RemoveByType<T>()` yourself to invalidate. Cache entries are never evicted automatically; you are responsible for triggering invalidation. The interceptor is what makes CleverCache hands-off.
 
 ## 1. Register services
 
@@ -30,7 +30,7 @@ CleverCache can be used with or without EF Core:
 
 ```csharp
 builder.Services.AddCleverCache();
-// optionally scan assemblies for [DependentCaches] attributes:
+// optionally scan assemblies for [CacheInvalidatedBy] attributes:
 builder.Services.AddCleverCache(o => o.ScanAssemblyContaining<Order>());
 ```
 
@@ -116,6 +116,6 @@ await host.RunAsync();
 
 See [Dependent Caches](Dependent-Caches) for full details on navigation scanning modes.
 
-> **Prefer `[DependentCaches]` attributes for most projects.** Global DbSet scanning wires up every entity in your context — in large schemas this can cause excessive invalidation and high memory usage from tracking too many key associations. `ScanAssemblyContaining` (step 1) gives you the same automatic wiring with opt-in, per-entity control.
+> **Prefer `[CacheInvalidatedBy]` attributes for most projects.** Global DbSet scanning wires up every entity in your context — in large schemas this can cause excessive invalidation and high memory usage from tracking too many key associations. `ScanAssemblyContaining` (step 1) gives you the same automatic wiring with opt-in, per-entity control.
 
-> **Not using EF Core navigation scanning?** Skip this step entirely — `[DependentCaches]` attributes via `ScanAssemblyContaining` don't need it.
+> **Not using EF Core navigation scanning?** Skip this step entirely — `[CacheInvalidatedBy]` attributes via `ScanAssemblyContaining` don't need it.

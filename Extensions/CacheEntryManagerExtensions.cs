@@ -6,12 +6,12 @@
 public static class CacheEntryManagerExtensions
 {
 	/// <summary>
-	/// Registers a cascade rule: when entries of <typeparamref name="T"/> are invalidated,
-	/// entries of <paramref name="dependentType"/> are also invalidated.
+	/// Registers that cached data for <typeparamref name="T"/> depends on <paramref name="dependentType"/>.
+	/// Invalidating <paramref name="dependentType"/> also invalidates cache entries for <typeparamref name="T"/>.
 	/// </summary>
-	/// <typeparam name="T">The trigger type — invalidating this type will also invalidate <paramref name="dependentType"/>.</typeparam>
+	/// <typeparam name="T">The entity type whose cached data depends on <paramref name="dependentType"/>.</typeparam>
 	/// <param name="cache">The cache instance.</param>
-	/// <param name="dependentType">The type whose entries should also be evicted when <typeparamref name="T"/> is invalidated.</param>
+	/// <param name="dependentType">The type whose invalidation should also evict cache entries for <typeparamref name="T"/>.</param>
 	public static void AddDependentCache<T>(this ICleverCache cache, Type dependentType) => cache.AddDependentCache(typeof(T), dependentType);
 
 	/// <summary>
@@ -34,7 +34,8 @@ public static class CacheEntryManagerExtensions
 
 	/// <summary>
 	/// Asynchronously removes all cache entries associated with <typeparamref name="T"/>,
-	/// including any dependent types. Prefer over <c>RemoveByType</c> when using a distributed cache backend.
+	/// including entries for types whose cached data depends on it.
+	/// Prefer over <c>RemoveByType</c> when using a distributed cache backend.
 	/// </summary>
 	public static Task RemoveByTypeAsync<T>(this ICleverCache cache, CancellationToken cancellationToken = default) =>
 		cache.RemoveByTypeAsync(typeof(T), cancellationToken);

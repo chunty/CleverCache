@@ -20,6 +20,30 @@ file class CachedEntity;
 public class AutoCacheBehaviourTests
 {
     [Fact]
+    public void Attribute_InvalidatedBy_ContainsSpecifiedTypes()
+    {
+        var attribute = new AutoCacheAttribute(invalidatedBy: [typeof(CachedEntity), typeof(string)]);
+
+        Assert.Equal(new[] { typeof(CachedEntity), typeof(string) }, attribute.InvalidatedBy);
+    }
+
+    [Fact]
+    public void Attribute_NoTypes_HasNoInvalidationDependencies()
+    {
+        Assert.Empty(new AutoCacheAttribute().InvalidatedBy);
+    }
+
+    [Fact]
+    public void Attribute_Types_RemainsAnAliasForInvalidatedBy()
+    {
+        var attribute = new AutoCacheAttribute(typeof(CachedEntity));
+
+#pragma warning disable CS0618 // Verify the compatibility alias.
+        Assert.Same(attribute.InvalidatedBy, attribute.Types);
+#pragma warning restore CS0618
+    }
+
+    [Fact]
     public async Task Handle_NoAttribute_AlwaysCallsNext()
     {
         var cacheMock = new Mock<ICleverCache>();
@@ -53,7 +77,8 @@ public class AutoCacheBehaviourTests
         Assert.Equal("fresh", result);
         Assert.Equal(1, callCount);
         cacheMock.Verify(c => c.GetOrCreateAsync(
-            It.IsAny<Type[]>(), It.IsAny<object>(), It.IsAny<Func<Task<string>>>(), It.IsAny<CleverCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Once);
+            It.Is<Type[]>(types => types.Length == 1 && types[0] == typeof(CachedEntity)),
+            It.IsAny<object>(), It.IsAny<Func<Task<string>>>(), It.IsAny<CleverCacheEntryOptions>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

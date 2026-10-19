@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using CleverCache.Implementations;
 using Microsoft.Extensions.Caching.Memory;
 
@@ -94,8 +95,7 @@ public class CacheInvalidationRaceTests
     [InlineData(true)]
     public async Task DelayedEvictionOfOldEntry_ReplacementRemainsClearable(bool enableGuard)
     {
-        using var memory = new MemoryCache(new MemoryCacheOptions());
-        var store = new GatedEvictionStore(memory);
+        var store = new GatedEvictionStore();
         var cache = CreateService(store, enableGuard);
         var cancellationToken = TestContext.Current.CancellationToken;
         var canonicalKey = CacheKeyIdentity.ToCanonicalKey("order-list");
@@ -213,8 +213,7 @@ public class CacheInvalidationRaceTests
     [Fact]
     public async Task DelayedEvictionDuringReplacementFactory_ReplacementRemainsTracked()
     {
-        using var memory = new MemoryCache(new MemoryCacheOptions());
-        var store = new GatedEvictionStore(memory);
+        var store = new GatedEvictionStore();
         var cache = CreateService(store, false);
         var entered = NewSignal();
         var release = NewSignal();
@@ -251,8 +250,7 @@ public class CacheInvalidationRaceTests
     [Fact]
     public async Task GenuineStoreEviction_CleansUpTracking()
     {
-        using var memory = new MemoryCache(new MemoryCacheOptions());
-        var store = new GatedEvictionStore(memory);
+        var store = new GatedEvictionStore();
         var cache = CreateService(store, false);
         cache.GetOrCreate([typeof(Order)], "order", () => "Paid");
 
@@ -520,9 +518,10 @@ public class CacheInvalidationRaceTests
         }
     }
 
-    private sealed class GatedEvictionStore(IMemoryCache memory) : ICleverCacheStore, IEvictionNotifyingStore
+    private sealed class GatedEvictionStore : ICleverCacheStore, IEvictionNotifyingStore
     {
-        private readonly MemoryCacheStore _inner = new(memory);
+        private readonly ConcurrentDictionary<object, StoredValue> _values = new();
+        private Action<object>? _onEvicted;
         private int _callbackCount;
 
         public TaskCompletionSource CallbackEntered { get; } = NewSignal();
@@ -530,41 +529,64 @@ public class CacheInvalidationRaceTests
         public TaskCompletionSource CallbackCompleted { get; } = NewSignal();
 
         public void RegisterEvictionCallback(Action<object> onEvicted) =>
-            _inner.RegisterEvictionCallback(key =>
-            {
-                if (Interlocked.Increment(ref _callbackCount) != 1)
-                {
-                    onEvicted(key);
-                    return;
-                }
+            _onEvicted = onEvicted;
 
-                CallbackEntered.TrySetResult();
-                try
-                {
-                    ReleaseCallback.Task.WaitAsync(Timeout).GetAwaiter().GetResult();
-                    onEvicted(key);
-                    CallbackCompleted.TrySetResult();
-                }
-                catch (Exception exception)
-                {
-                    CallbackCompleted.TrySetException(exception);
-                }
-            });
+        public bool TryGet<TItem>(object key, out TItem? value)
+        {
+            var hit = _values.TryGetValue(key, out var stored);
+            value = hit ? (TItem?)stored!.Value : default;
+            return hit;
+        }
 
-        public bool TryGet<TItem>(object key, out TItem? value) => _inner.TryGet(key, out value);
-
-        public Task<(bool Hit, TItem? Value)> TryGetAsync<TItem>(object key, CancellationToken cancellationToken = default) =>
-            _inner.TryGetAsync<TItem>(key, cancellationToken);
+        public Task<(bool Hit, TItem? Value)> TryGetAsync<TItem>(object key, CancellationToken cancellationToken = default)
+        {
+            var hit = TryGet<TItem>(key, out var value);
+            return Task.FromResult((hit, value));
+        }
 
         public void Set<TItem>(object key, TItem value, CleverCacheEntryOptions? options = null) =>
-            _inner.Set(key, value, options);
+            _values[key] = new StoredValue(value);
 
-        public Task SetAsync<TItem>(object key, TItem value, CleverCacheEntryOptions? options = null, CancellationToken cancellationToken = default) =>
-            _inner.SetAsync(key, value, options, cancellationToken);
+        public Task SetAsync<TItem>(object key, TItem value, CleverCacheEntryOptions? options = null, CancellationToken cancellationToken = default)
+        {
+            Set(key, value, options);
+            return Task.CompletedTask;
+        }
 
-        public void Remove(object key) => _inner.Remove(key);
+        public void Remove(object key)
+        {
+            if (!_values.TryRemove(key, out _) || _onEvicted is not { } onEvicted) return;
 
-        public Task RemoveAsync(object key, CancellationToken cancellationToken = default) =>
-            _inner.RemoveAsync(key, cancellationToken);
+            if (Interlocked.Increment(ref _callbackCount) != 1)
+            {
+                onEvicted(key);
+                return;
+            }
+
+            CallbackEntered.TrySetResult();
+            _ = CompleteDelayedCallbackAsync(key, onEvicted);
+        }
+
+        public Task RemoveAsync(object key, CancellationToken cancellationToken = default)
+        {
+            Remove(key);
+            return Task.CompletedTask;
+        }
+
+        private async Task CompleteDelayedCallbackAsync(object key, Action<object> onEvicted)
+        {
+            try
+            {
+                await ReleaseCallback.Task.ConfigureAwait(false);
+                onEvicted(key);
+                CallbackCompleted.TrySetResult();
+            }
+            catch (Exception exception)
+            {
+                CallbackCompleted.TrySetException(exception);
+            }
+        }
+
+        private sealed record StoredValue(object? Value);
     }
 }

@@ -21,7 +21,7 @@ internal class AutoCacheBehaviour<TRequest, TResponse>(ICleverCache cache)
 
 		var createOptions = BuildOptions(attribute);
 		var result = await cache.GetOrCreateAsync(
-			attribute.Types,
+			attribute.InvalidatedBy,
 			request,
 			() => next(cancellationToken),
 			createOptions,

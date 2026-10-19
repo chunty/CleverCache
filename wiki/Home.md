@@ -12,12 +12,13 @@ With a small amount of configuration, CleverCache automatically tracks changes v
 | [Caching Data](Caching-Data) | `GetOrCreate`, multi-type associations, entry options |
 | [Cache Providers](Cache-Providers) | Memory, distributed, Redis, custom providers |
 | [Cache Key Providers](Cache-Key-Providers) | Type-specific overrides for complex cache keys |
-| [Dependent Caches](Dependent-Caches) | `AddKeyToType`, `AddDependentCache`, `[DependentCaches]` attribute |
+| [Dependent Caches](Dependent-Caches) | `AddKeyToType`, `AddDependentCache`, `[CacheInvalidatedBy]` attribute |
 | [MediatR Integration](MediatR-Integration) | `[AutoCache]`, `[InvalidatesCache]`, pipeline setup |
 | [Bulk Operations](Bulk-Operations) | Handling `ExecuteDelete`/`ExecuteUpdate` and non-EF writes |
 | [Diagnostics](Diagnostics) | Inspecting the dependency graph and tracked keys at runtime |
 | [Unit Testing](Unit-Testing) | `FakeCache`, mocking `ICleverCache` |
 | [Migrating to V2](Migrating-to-V2) | Breaking changes and before/after examples for V1 → V2 |
+| [Migrating to V3](Migrating-to-V3) | V2 to V3 attribute naming, compatibility, and invalidation settings |
 
 ## Packages
 
